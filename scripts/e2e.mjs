@@ -225,7 +225,7 @@ try {
   step('old client folder: addresses found in storage/ and attached to their keys');
   await page.goto(`${base}/app.html#/import?tab=legacy`);
   await pickFolder(page.locator('.folderpick input[type=file]'), oldFolder);
-  await page.getByText(/block files from storage\/ found/).waitFor();
+  await page.getByText(/block file\(s\) from storage\/ found/).waitFor();
   await page.getByLabel('Wallet file password').fill(legacy.password);
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByText('Select accounts').waitFor();

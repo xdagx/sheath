@@ -22,10 +22,14 @@ export type ScanMessage =
 /** A selected old client folder: the wallet files and the block files of its storage folder. */
 export interface LegacyFolder {
   name: string;
+  /** the wallet file in use (wallet.dat preferred over wallet-testnet.dat) */
   walletDat: File | null;
+  /** the other wallet file of the same client folder, if both exist */
+  otherWalletDat: File | null;
   dnetKeyDat: File | null;
   storage: Array<{ file: File } & StorageFileRef>;
-  storageBytes: number;
+  /** more block files than MAX_STORAGE_FILES: the rest are not scanned */
+  truncated: boolean;
 }
 
 /** the folder picked on the import page, handed to the preview page (File objects stay in this tab) */
@@ -40,15 +44,20 @@ const THOROUGH_LIMIT = 100_000;
 
 export function readFolder(files: File[]): LegacyFolder {
   const withPath = files.map((file) => ({ file, path: file.webkitRelativePath || file.name }));
-  const { walletDat, dnetKeyDat, storage } = findLegacyWalletFiles(withPath);
-  const kept = storage.slice(0, MAX_STORAGE_FILES);
+  const { walletDat, otherWalletDat, dnetKeyDat, storage } = findLegacyWalletFiles(withPath);
   return {
     name: withPath[0]?.path.split('/')[0] ?? '',
     walletDat: walletDat?.file ?? null,
+    otherWalletDat: otherWalletDat?.file ?? null,
     dnetKeyDat: dnetKeyDat?.file ?? null,
-    storage: kept.map(({ file, net, frame }) => ({ file, net, frame })),
-    storageBytes: kept.reduce((n, f) => n + f.file.size, 0),
+    storage: storage.map(({ file, net, frame }) => ({ file, net, frame })),
+    truncated: storage.length > MAX_STORAGE_FILES,
   };
+}
+
+/** The network a wallet file belongs to, from its name (the C client adds -testnet). */
+export function walletNet(file: { name: string } | null): LegacyNet {
+  return file && /-testnet/i.test(file.name) ? 'testnet' : 'mainnet';
 }
 
 export interface ScanHandle {
@@ -57,6 +66,10 @@ export interface ScanHandle {
 }
 
 export function scanFolder(folder: LegacyFolder, pubkeys: string[], onProgress: (done: number, total: number, found: OwnedBlock[]) => void): ScanHandle {
+  // the storage of the wallet file's own network first (stable sort keeps the time order), then the cap
+  const net = walletNet(folder.walletDat);
+  const files = [...folder.storage].sort((a, b) => Number(a.net !== net) - Number(b.net !== net)).slice(0, MAX_STORAGE_FILES);
+  const bytes = files.reduce((n, f) => n + f.file.size, 0);
   const worker = new Worker(new URL('./storage-scan.worker.ts', import.meta.url), { type: 'module' });
   let settle: ((v: { found: OwnedBlock[]; stats: ScanStats }) => void) | null = null;
   let fail: ((e: Error) => void) | null = null;
@@ -77,8 +90,8 @@ export function scanFolder(folder: LegacyFolder, pubkeys: string[], onProgress: 
     worker.terminate();
     fail?.(new Error(e.message || 'scan failed'));
   };
-  const estimatedChecks = (folder.storageBytes / 512) * pubkeys.length;
-  const req: ScanRequest = { files: folder.storage, pubkeys, thorough: estimatedChecks <= THOROUGH_LIMIT, verifyBudget: VERIFY_BUDGET };
+  const estimatedChecks = (bytes / 512) * pubkeys.length;
+  const req: ScanRequest = { files, pubkeys, thorough: estimatedChecks <= THOROUGH_LIMIT, verifyBudget: VERIFY_BUDGET };
   worker.postMessage(req);
   return {
     done,

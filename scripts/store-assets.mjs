@@ -134,6 +134,7 @@ try {
     await pickFolder(page.locator('.folderpick input[type=file]'), oldFolder);
     await page.locator('.notice-success').waitFor();
     await page.getByLabel(L.pw).fill(legacy.password);
+    await page.locator('.page-body').evaluate((e) => (e.scrollTop = 0));
     await settle(page);
     raw[`legacy-import-${lang}`] = await page.locator('#app').screenshot();
     await page.getByRole('button', { name: L.cont }).click();

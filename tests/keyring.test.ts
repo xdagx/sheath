@@ -390,6 +390,68 @@ describe('keyring', () => {
   });
 });
 
+describe('old address import edge cases', () => {
+  const v = legacyVectors[0]!;
+  const legacyPreview = (kr: InstanceType<typeof Keyring>) =>
+    kr.previewImport({ kind: 'legacy', walletDat: { name: 'wallet.dat', data: v.walletDat }, dnetKeyDat: { name: 'dnet_key.dat', data: v.dnetKeyDat }, filePassword: v.password });
+  const many = (n: number, salt: number) => Array.from({ length: n }, (_, i) => encodeLegacyAddress(sha256d(Uint8Array.of(salt, i)).subarray(0, 24)));
+
+  it('a rejected first import does not leave an empty wallet behind', async () => {
+    await local.clear();
+    await session.clear();
+    const kr = new Keyring();
+    const preview = await legacyPreview(kr);
+    await expect(
+      kr.commitImport({
+        token: preview.token,
+        addresses: preview.accounts.map((a) => a.address),
+        newVaultPassword: PASSWORD,
+        ownedBlocks: many(51, 1).map((block) => ({ block, owner: preview.accounts[0]!.address })),
+      }),
+    ).rejects.toMatchObject({ code: 'too_many_blocks', message: '50' });
+    expect((await kr.state()).initialized).toBe(false);
+    expect(local.dump().vault).toBeUndefined();
+    // the same staged import still commits once the selection is valid
+    await kr.commitImport({
+      token: preview.token,
+      addresses: [preview.accounts[1]!.address],
+      newVaultPassword: PASSWORD,
+      ownedBlocks: many(3, 2).map((block) => ({ block, owner: preview.accounts[1]!.address })),
+    });
+    const st = await kr.state();
+    expect(st.accounts).toHaveLength(1);
+    expect(st.accounts[0]!.legacyBlocks).toHaveLength(3);
+  });
+
+  it('typed addresses go to an existing account of the wallet when no new account is chosen', async () => {
+    const kr = new Keyring();
+    const preview = await legacyPreview(kr); // key #2 exists (previous test), the default key does not
+    const [typedOne] = many(1, 3);
+    const found = many(1, 2)[0]!; // already attached to key #2
+    await kr.commitImport({ token: preview.token, addresses: [], legacyBlocks: [typedOne!, found], ownedBlocks: [{ block: found, owner: preview.accounts[1]!.address }] });
+    const st = await kr.state();
+    expect(st.accounts).toHaveLength(1);
+    expect(st.accounts[0]!.legacyBlocks).toContain(typedOne);
+    expect(st.accounts[0]!.legacyBlocks.filter((b) => b === found)).toHaveLength(1);
+  });
+
+  it('a typed address that was also found stays with the key that owns it', async () => {
+    const kr = new Keyring();
+    const preview = await legacyPreview(kr);
+    const [block] = many(1, 4);
+    // the default key is new and chosen first, but the block was found under key #2
+    await kr.commitImport({
+      token: preview.token,
+      addresses: [preview.accounts[0]!.address],
+      legacyBlocks: [block!],
+      ownedBlocks: [{ block: block!, owner: preview.accounts[1]!.address }],
+    });
+    const st = await kr.state();
+    expect(st.accounts.find((a) => a.address === preview.accounts[1]!.address)!.legacyBlocks).toContain(block);
+    expect(st.accounts.find((a) => a.address === preview.accounts[0]!.address)!.legacyBlocks).not.toContain(block);
+  });
+});
+
 import { privateKeyToAddress } from '@/core/keys';
 function addrOf(privHex: string): string {
   return privateKeyToAddress(fromHex(privHex));

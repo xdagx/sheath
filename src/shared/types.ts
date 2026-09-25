@@ -105,3 +105,6 @@ export interface SendResult {
   blockAddress: string;
   pending: PendingTx;
 }
+
+/** old block addresses kept per account (each one is refreshed on the home screen) */
+export const MAX_LEGACY_BLOCKS = 50;

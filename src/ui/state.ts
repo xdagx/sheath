@@ -23,7 +23,10 @@ export function applyState(st: WalletState): void {
     languageSetting.value = st.settings.language;
     if (prevNetwork !== st.settings.networkId) nodeError.value = null;
   });
-  if (prevNetwork !== st.settings.networkId) loadCachedBalances();
+  if (prevNetwork !== st.settings.networkId) {
+    if (prevNetwork !== undefined) balances.value = {}; // another network: the old balances do not apply
+    loadCachedBalances();
+  }
   applyTheme(st.settings.theme);
 }
 
@@ -95,8 +98,10 @@ export function balanceOf(address: string): bigint | null {
 }
 
 export async function refreshBalance(address: string): Promise<bigint | null> {
+  const netId = network.value.id;
   try {
     const value = await rpc.value.getBalance(address);
+    if (network.value.id !== netId) return null; // the network changed meanwhile
     const next = { ...balances.value, [address]: { value: value.toString(), at: Date.now() } };
     balances.value = next;
     nodeError.value = null;
@@ -107,9 +112,16 @@ export async function refreshBalance(address: string): Promise<bigint | null> {
     if (wallet.value?.unlocked) void chrome.storage.session.set({ [cacheKey()]: next }).catch(() => undefined);
     return value;
   } catch (e) {
+    if (network.value.id !== netId) return null;
     // a JSON-RPC error means the node answered (e.g. unknown block address): not a connectivity issue
     if (!(e instanceof RpcError) || e.kind === 'transport') nodeError.value = (e as Error).message;
-    else unknownOnNode.value = { ...unknownOnNode.value, [address]: true };
+    else {
+      unknownOnNode.value = { ...unknownOnNode.value, [address]: true };
+      if (balances.value[address]) {
+        const { [address]: _, ...rest } = balances.value;
+        balances.value = rest;
+      }
+    }
     return null;
   }
 }

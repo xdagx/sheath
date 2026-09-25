@@ -120,6 +120,13 @@ describe('storage folder scan (C client vectors)', () => {
     expect(s.scanFile(fromHex(t.raw), { net: 'testnet', frame: tframe }).length).toBe(1);
   });
 
+  it('reports when more owned blocks exist than it keeps', () => {
+    const scanner = new StorageScanner(pubs, { now: NOW, thorough: true, maxOwned: 2 });
+    scanFixture(scanner);
+    expect(scanner.results()).toHaveLength(2);
+    expect(scanner.stats.ownedLimitReached).toBe(true);
+  });
+
   it('stops at the verification budget', () => {
     const scanner = new StorageScanner(pubs, { now: NOW, verifyBudget: 2 });
     scanFixture(scanner);
@@ -178,6 +185,21 @@ describe('folder selection', () => {
     expect(r.walletDat?.path).toBe('old/xdag/wallet.dat');
     expect(r.dnetKeyDat?.path).toBe('old/xdag/dnet_key.dat');
     expect(r.storage.map((f) => f.path)).toEqual(['old/xdag/storage/01/6a/00/00.dat']);
+  });
+
+  it('prefers wallet.dat when the client also left a wallet-testnet.dat, in any listing order', () => {
+    const base = [{ path: 'xdag/dnet_key.dat' }, { path: 'xdag/storage/01/6a/00/00.dat' }, { path: 'xdag/storage-testnet/01/6a/00/06.dat' }];
+    for (const order of [
+      [{ path: 'xdag/wallet-testnet.dat' }, { path: 'xdag/wallet.dat' }],
+      [{ path: 'xdag/wallet.dat' }, { path: 'xdag/wallet-testnet.dat' }],
+    ]) {
+      const r = findLegacyWalletFiles([...base, ...order]);
+      expect(r.walletDat?.path).toBe('xdag/wallet.dat');
+      expect(r.otherWalletDat?.path).toBe('xdag/wallet-testnet.dat');
+    }
+    const only = findLegacyWalletFiles([{ path: 'x/wallet-testnet.dat' }, { path: 'x/storage-testnet/01/6a/00/06.dat' }]);
+    expect(only.walletDat?.path).toBe('x/wallet-testnet.dat');
+    expect(only.otherWalletDat).toBeNull();
   });
 
   it('works without a storage folder', () => {

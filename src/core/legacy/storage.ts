@@ -53,6 +53,8 @@ export interface ScanStats {
   /** candidates skipped because they carry only foreign public keys (see `thorough`) */
   skipped: number;
   budgetExhausted: boolean;
+  /** more owned blocks were found than `maxOwned`; the rest were dropped */
+  ownedLimitReached: boolean;
 }
 
 export interface ScanOptions {
@@ -105,7 +107,7 @@ function beInt(b: Uint8Array): bigint {
 }
 
 export class StorageScanner {
-  readonly stats: ScanStats = { files: 0, blocks: 0, candidates: 0, verifications: 0, damagedFiles: 0, skipped: 0, budgetExhausted: false };
+  readonly stats: ScanStats = { files: 0, blocks: 0, candidates: 0, verifications: 0, damagedFiles: 0, skipped: 0, budgetExhausted: false, ownedLimitReached: false };
   private readonly found = new Map<string, OwnedBlock>();
   private readonly budget: number;
   private readonly thorough: boolean;
@@ -218,7 +220,11 @@ export class StorageScanner {
         }
         if (!ok) continue;
         const address = blockAddressOfRaw(b);
-        if (this.found.has(address) || this.found.size >= this.maxOwned) return null;
+        if (this.found.has(address)) return null;
+        if (this.found.size >= this.maxOwned) {
+          this.stats.ownedLimitReached = true;
+          return null;
+        }
         // address: the wallet's own first block (0x551 / 0x558), or a pool's first block (links + signature)
         const kind: OwnedBlockKind = hasIn
           ? 'tx'
@@ -244,8 +250,12 @@ export interface FolderFile {
 /**
  * Picks the wallet files of an old client folder: wallet.dat (or wallet-testnet.dat) and
  * dnet_key.dat, preferring those that sit next to a storage folder, then the shallowest ones.
+ * A client run on both networks leaves wallet.dat and wallet-testnet.dat side by side (same
+ * dnet_key.dat and password): the mainnet wallet is preferred, the other one is reported.
  */
-export function findLegacyWalletFiles<T extends FolderFile>(files: T[]): { walletDat: T | null; dnetKeyDat: T | null; storage: Array<T & StorageFileRef> } {
+export function findLegacyWalletFiles<T extends FolderFile>(
+  files: T[],
+): { walletDat: T | null; otherWalletDat: T | null; dnetKeyDat: T | null; storage: Array<T & StorageFileRef> } {
   const norm = (p: string) => p.replace(/\\/g, '/');
   const storage: Array<T & StorageFileRef> = [];
   const roots = new Set<string>();
@@ -258,12 +268,20 @@ export function findLegacyWalletFiles<T extends FolderFile>(files: T[]): { walle
     roots.add(i <= 0 ? '' : p.slice(0, i));
   }
   storage.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
-  const pick = (re: RegExp): T | null => {
-    const cands = files.filter((f) => re.test(norm(f.path).split('/').pop() ?? ''));
-    if (!cands.length) return null;
-    const dirOf = (f: T) => norm(f.path).split('/').slice(0, -1).join('/');
-    const depth = (f: T) => norm(f.path).split('/').length;
-    return [...cands].sort((a, b) => Number(roots.has(dirOf(b))) - Number(roots.has(dirOf(a))) || depth(a) - depth(b))[0]!;
-  };
-  return { walletDat: pick(/^wallet(-testnet)?\.dat$/i), dnetKeyDat: pick(/^dnet_key\.dat$/i), storage };
+  const nameOf = (f: T) => norm(f.path).split('/').pop() ?? '';
+  const dirOf = (f: T) => norm(f.path).split('/').slice(0, -1).join('/');
+  const depth = (f: T) => norm(f.path).split('/').length;
+  const ranked = (re: RegExp): T[] =>
+    files
+      .filter((f) => re.test(nameOf(f)))
+      .sort(
+        (a, b) =>
+          Number(roots.has(dirOf(b))) - Number(roots.has(dirOf(a))) ||
+          depth(a) - depth(b) ||
+          Number(/-testnet/i.test(nameOf(a))) - Number(/-testnet/i.test(nameOf(b))),
+      );
+  const wallets = ranked(/^wallet(-testnet)?\.dat$/i);
+  const walletDat = wallets[0] ?? null;
+  const otherWalletDat = walletDat ? (wallets.find((w) => dirOf(w) === dirOf(walletDat) && nameOf(w).toLowerCase() !== nameOf(walletDat).toLowerCase()) ?? null) : null;
+  return { walletDat, otherWalletDat, dnetKeyDat: ranked(/^dnet_key\.dat$/i)[0] ?? null, storage };
 }
