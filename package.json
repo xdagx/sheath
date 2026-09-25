@@ -1,5 +1,5 @@
 {
-  "name": "xdag-wallet-extension",
+  "name": "sheath-xdag-wallet",
   "version": "1.0.0",
   "private": true,
   "description": "XDAG browser extension wallet (Chrome MV3) compatible with legacy 2018 wallet.dat and xdagj wallet.data files",

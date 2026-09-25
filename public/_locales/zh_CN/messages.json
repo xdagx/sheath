@@ -1,6 +1,14 @@
 {
-  "extName": { "message": "XDAG 钱包" },
-  "extShortName": { "message": "XDAG 钱包" },
-  "extActionTitle": { "message": "XDAG 钱包" },
-  "extDescription": { "message": "安全的 XDAG 浏览器钱包，支持导入 2018 版 wallet.dat、xdagj wallet.data、助记词和私钥。" }
+  "extName": {
+    "message": "藏锋 — XDAG 自托管钱包"
+  },
+  "extShortName": {
+    "message": "藏锋"
+  },
+  "extActionTitle": {
+    "message": "藏锋 — XDAG 钱包"
+  },
+  "extDescription": {
+    "message": "社区开发的 XDAG 自托管钱包（非官方）。支持导入 2018 版 wallet.dat、xdagj wallet.data、助记词和私钥。"
+  }
 }

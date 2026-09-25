@@ -1,4 +1,4 @@
-// Packs dist/ into release/xdag-wallet-<version>.zip for the Chrome Web Store or manual install.
+// Packs dist/ into release/sheath-xdag-wallet-<version>.zip for the Chrome Web Store or manual install.
 // Dependency-free ZIP writer (deflate via node:zlib).
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -76,6 +76,6 @@ end.writeUInt32LE(centralBuf.length, 12);
 end.writeUInt32LE(offset, 16);
 
 mkdirSync('release', { recursive: true });
-const out = join('release', `xdag-wallet-${version}.zip`);
+const out = join('release', `sheath-xdag-wallet-${version}.zip`);
 writeFileSync(out, Buffer.concat([...local, centralBuf, end]));
 console.log(`wrote ${out}`);

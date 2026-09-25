@@ -1,6 +1,14 @@
 {
-  "extName": { "message": "XDAG Wallet" },
-  "extShortName": { "message": "XDAG Wallet" },
-  "extActionTitle": { "message": "XDAG Wallet" },
-  "extDescription": { "message": "Secure XDAG wallet. Imports 2018 wallet.dat, xdagj wallet.data, mnemonics and private keys." }
+  "extName": {
+    "message": "Sheath — Self-Custody Wallet for XDAG"
+  },
+  "extShortName": {
+    "message": "Sheath"
+  },
+  "extActionTitle": {
+    "message": "Sheath — XDAG wallet"
+  },
+  "extDescription": {
+    "message": "Community-built, self-custody XDAG wallet. Opens 2018 wallet.dat, xdagj wallet.data, recovery phrases and private keys."
+  }
 }

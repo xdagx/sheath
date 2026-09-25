@@ -30,9 +30,15 @@ const svg = `
 mkdirSync('public/icons', { recursive: true });
 const browser = await playwright.chromium.launch();
 const page = await browser.newPage();
+// Chrome Web Store: the 128px icon should be 96x96 artwork with 16px transparent padding;
+// toolbar / management-page sizes use the full canvas.
 for (const size of [16, 32, 48, 128]) {
+  const art = size === 128 ? 96 : size;
+  const pad = (size - art) / 2;
   await page.setViewportSize({ width: size, height: size });
-  await page.setContent(`<html><body style="margin:0;background:transparent">${svg.replace('<svg ', `<svg width="${size}" height="${size}" `)}</body></html>`);
+  await page.setContent(
+    `<html><body style="margin:0;background:transparent"><div style="padding:${pad}px">${svg.replace('<svg ', `<svg width="${art}" height="${art}" style="display:block" `)}</div></body></html>`,
+  );
   await page.screenshot({ path: `public/icons/icon-${size}.png`, omitBackground: true, clip: { x: 0, y: 0, width: size, height: size } });
 }
 await browser.close();

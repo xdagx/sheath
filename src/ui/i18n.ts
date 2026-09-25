@@ -2,7 +2,7 @@ import { computed, signal } from '@preact/signals';
 import type { LanguageSetting } from '@/shared/types';
 
 const en = {
-  appName: 'XDAG Wallet',
+  appName: 'Sheath',
   continue: 'Continue',
   back: 'Back',
   cancel: 'Cancel',
@@ -29,8 +29,10 @@ const en = {
   today: 'Today',
   yesterday: 'Yesterday',
 
-  welcomeTitle: 'XDAG Wallet',
-  welcomeSubtitle: 'A secure, fast wallet for the XDAG network — right in your browser.',
+  welcomeTitle: 'Sheath',
+  welcomeSubtitle: 'A self-custody wallet for XDAG — right in your browser.',
+  unofficialNote: 'Community-built · not affiliated with or endorsed by the XDagger team',
+  nodeDataNote: 'Your public addresses and the transactions you sign are sent to the selected node to read balances and broadcast transfers. The node operator can see your IP address.',
   createWallet: 'Create a new wallet',
   createWalletDesc: 'Generate a 12-word recovery phrase',
   importWallet: 'Import a wallet',
@@ -50,7 +52,7 @@ const en = {
   strengthWeak: 'Weak',
   strengthFair: 'Fair',
   strengthStrong: 'Strong',
-  passwordAck: 'I understand XDAG Wallet cannot recover this password for me.',
+  passwordAck: 'I understand Sheath cannot recover this password for me.',
 
   backupTitle: 'Secret recovery phrase',
   backupDesc: 'Write these 12 words down in order and keep them offline. Anyone with this phrase controls your funds.',
@@ -305,7 +307,7 @@ const en = {
 export type MessageKey = keyof typeof en;
 
 const zh: Record<MessageKey, string> = {
-  appName: 'XDAG 钱包',
+  appName: '藏锋',
   continue: '继续',
   back: '返回',
   cancel: '取消',
@@ -332,8 +334,10 @@ const zh: Record<MessageKey, string> = {
   today: '今天',
   yesterday: '昨天',
 
-  welcomeTitle: 'XDAG 钱包',
-  welcomeSubtitle: '安全、快速的 XDAG 浏览器钱包。',
+  welcomeTitle: '藏锋',
+  welcomeSubtitle: '私钥不出本机的 XDAG 自托管浏览器钱包。',
+  unofficialNote: '社区开发 · 与 XDagger 官方团队无隶属或背书关系',
+  nodeDataNote: '为查询余额和广播转账，你的公开地址及你签名的交易会发送到所选节点；节点运营方可以看到你的 IP 地址。',
   createWallet: '创建新钱包',
   createWalletDesc: '生成 12 个单词的助记词',
   importWallet: '导入钱包',
@@ -353,7 +357,7 @@ const zh: Record<MessageKey, string> = {
   strengthWeak: '弱',
   strengthFair: '中',
   strengthStrong: '强',
-  passwordAck: '我了解 XDAG 钱包无法帮我找回此密码。',
+  passwordAck: '我了解藏锋无法帮我找回此密码。',
 
   backupTitle: '助记词',
   backupDesc: '请按顺序抄写这 12 个单词并离线保存。任何获得助记词的人都能控制你的资产。',

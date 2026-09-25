@@ -1,1 +1,11 @@
-{ "name": "XDAG Wallet", "nameZh": "XDAG 钱包", "taglineEn": "The XDAG wallet, beautifully simple", "taglineZh": "简洁优雅的 XDAG 钱包" }
+{
+  "name": "Sheath",
+  "nameZh": "藏锋",
+  "storeTitleEn": "Sheath — Self-Custody Wallet for XDAG",
+  "storeTitleZh": "藏锋 — XDAG 自托管钱包",
+  "taglineEn": "Keys never leave your device — and your 2018 XDAG wallet comes home too.",
+  "taglineZh": "藏锋于鞘，私钥不出本机；2018 年的老钱包也能安然归鞘。",
+  "descriptorEn": "Self-custody wallet for XDAG",
+  "descriptorZh": "XDAG 自托管钱包",
+  "publisher": "xdagx community"
+}

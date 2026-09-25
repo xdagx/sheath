@@ -87,7 +87,7 @@ export function SettingsPage() {
         <h3>{t('about')}</h3>
       </div>
       <div class="card list-card">
-        <Row icon="info" title={t('version')} right={<span class="muted">{version}</span>} />
+        <Row icon="info" title={`${t('appName')} ${version}`} subtitle={<span class="wrap">{t('unofficialNote')}</span>} />
         <Row icon="external" title="XDagger/xdagj" subtitle={t('sourceCode')} onClick={() => openExternal('https://github.com/XDagger/xdagj')} />
         <Row icon="external" title="XDagger/xdag" subtitle="2018 C client · wallet.dat" onClick={() => openExternal('https://github.com/XDagger/xdag')} />
         <Row icon="external" title="XDagger/XDAG-Pro" onClick={() => openExternal('https://github.com/XDagger/xdag-pro')} />
@@ -321,6 +321,7 @@ export function NetworksPage() {
           </div>
         ))}
       </div>
+      <Notice kind="info">{t('nodeDataNote')}</Notice>
       <NetworkEditor value={editing} onClose={() => setEditing(null)} />
     </Page>
   );

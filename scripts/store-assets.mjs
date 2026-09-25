@@ -5,7 +5,7 @@
 //
 // Branding (name, taglines) is read from store/brand.json.
 import { createRequire } from 'node:module';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { secp256k1 } from '@noble/curves/secp256k1.js';
@@ -195,14 +195,14 @@ try {
   const logo = b64(readFileSync('public/icons/icon-128.png'));
   const frames = {
     en: [
-      { shot: ['home-en'], title: brand.taglineEn, sub: 'Balance, activity and accounts at a glance. Dark and light themes, English and 中文.' },
+      { shot: ['home-en'], title: 'Your XDAG, kept close', sub: 'Balance, activity and accounts at a glance. Open source, dark & light themes, English & 中文.' },
       { shot: ['legacy-import-en', 'legacy-home-en'], title: 'Rescue your 2018 XDAG wallet', sub: 'Opens the original wallet.dat + dnet_key.dat and moves old block-address balances to your new address.' },
       { shot: ['send-en'], title: 'Clear fees, no surprises', sub: 'See exactly what the recipient receives before you sign. Nonce and network are checked for you.' },
       { shot: ['accounts-en', 'legacy-preview-en'], title: 'Every XDAG wallet format', sub: 'Recovery phrase, private key, xdagj wallet.data and 2018 wallet.dat — plus export to wallet.data.' },
       { shot: ['receive-en'], title: 'Keys never leave your device', sub: 'Encrypted vault, auto-lock, no tracking, no remote code. Open source.' },
     ],
     zh: [
-      { shot: ['home-zh'], title: brand.taglineZh, sub: '余额、交易记录、多账户一目了然。深色 / 浅色主题，中英文界面。' },
+      { shot: ['home-zh'], title: '你的 XDAG，稳稳藏好', sub: '余额、交易记录、多账户一目了然。开源，深浅主题，中英文界面。' },
       { shot: ['legacy-import-zh', 'legacy-home-zh'], title: '找回 2018 年的 XDAG 老钱包', sub: '直接打开原版 wallet.dat + dnet_key.dat，把旧区块地址中的余额转到新地址。' },
       { shot: ['send-zh'], title: '手续费清清楚楚', sub: '签名前就能看到对方实收金额；nonce 与网络由钱包自动校验。' },
       { shot: ['accounts-zh', 'legacy-preview-zh'], title: '新老钱包格式全兼容', sub: '助记词、私钥、xdagj wallet.data、2018 wallet.dat，并可导出 wallet.data。' },
@@ -240,12 +240,13 @@ try {
       await render(
         `<div style="display:flex;height:100%;align-items:center;padding:0 80px;gap:56px">
            <div style="flex:1;min-width:0">
-             <div class="brand" style="font-size:24px;margin-bottom:40px"><img src="${logo}" width="48" height="48">${lang === 'zh' ? brand.nameZh : brand.name}</div>
+             <div class="brand" style="font-size:24px;margin-bottom:40px"><img src="${logo}" width="48" height="48">${lang === 'zh' ? `${brand.nameZh}<span style="font-weight:500;color:#9aa4b6;font-size:18px">&nbsp;· ${brand.descriptorZh}</span>` : `${brand.name}<span style="font-weight:500;color:#9aa4b6;font-size:18px">&nbsp;· ${brand.descriptorEn}</span>`}</div>
              <h1 style="font-size:${lang === 'zh' ? 50 : 48}px;line-height:1.15;letter-spacing:-.02em;font-weight:800">${f.title}</h1>
              <p style="margin-top:22px;font-size:${lang === 'zh' ? 23 : 22}px;line-height:1.55;color:#a9b2c3;max-width:520px">${f.sub}</p>
            </div>
            <div style="display:flex;gap:26px;align-items:center">${imgs}</div>
-         </div>`,
+         </div>
+         <div style="position:absolute;left:80px;bottom:26px;font-size:14px;color:#6f7a8e">${lang === 'zh' ? '社区开发 · 与 XDagger 官方团队无隶属关系' : 'Community-built · not affiliated with the XDagger team'}</div>`,
         1280,
         800,
         join(OUT, `screenshot-${lang}-${i++}.png`),
@@ -253,33 +254,35 @@ try {
     }
   }
 
-  for (const lang of ['en', 'zh']) {
-    const name = lang === 'zh' ? brand.nameZh : brand.name;
-    const tagline = lang === 'zh' ? brand.taglineZh : brand.taglineEn;
-    await render(
-      `<div style="height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 34px;gap:16px">
-         <div class="brand" style="font-size:30px"><img src="${logo}" width="64" height="64">${name}</div>
-         <div style="font-size:${lang === 'zh' ? 19 : 18}px;color:#b7c0d0;line-height:1.4">${tagline}</div>
-       </div>`,
-      440,
-      280,
-      join(OUT, `promo-small-440x280-${lang}.png`),
-    );
-    await render(
-      `<div style="display:flex;height:100%;align-items:center;padding:0 90px;gap:60px">
-         <div style="flex:1">
-           <div class="brand" style="font-size:54px"><img src="${logo}" width="104" height="104">${name}</div>
-           <div style="margin-top:26px;font-size:${lang === 'zh' ? 32 : 30}px;color:#c3cbda;line-height:1.35">${tagline}</div>
-         </div>
-         <img class="shot" src="${b64(raw[`home-${lang}`])}" style="height:470px;transform:translateY(70px)">
-       </div>`,
-      1400,
-      560,
-      join(OUT, `promo-marquee-1400x560-${lang}.png`),
-    );
-  }
+  // promo tiles cannot be localized in the store: one bilingual, text-light design per size
+  await render(
+    `<div style="height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 36px;gap:14px">
+       <div class="brand" style="font-size:40px;gap:16px"><img src="${logo}" width="72" height="72">${brand.name}<span style="font-weight:600;color:#c7cfdd">${brand.nameZh}</span></div>
+       <div style="font-size:18px;color:#aab3c4;line-height:1.45">${brand.descriptorEn}<br>${brand.descriptorZh}</div>
+     </div>`,
+    440,
+    280,
+    join(OUT, 'promo-small-440x280.png'),
+  );
+  await render(
+    `<div style="display:flex;height:100%;align-items:center;padding:0 90px;gap:60px">
+       <div style="flex:1">
+         <div class="brand" style="font-size:64px;gap:22px"><img src="${logo}" width="112" height="112">${brand.name}<span style="font-weight:600;color:#c7cfdd">${brand.nameZh}</span></div>
+         <div style="margin-top:28px;font-size:28px;color:#c3cbda;line-height:1.4">${brand.descriptorEn}<br>${brand.descriptorZh}</div>
+       </div>
+       <img class="shot" src="${b64(raw['home-en'])}" style="height:470px;transform:translateY(70px)">
+     </div>`,
+    1400,
+    560,
+    join(OUT, 'promo-marquee-1400x560.png'),
+  );
   await browser.close();
-  writeFileSync(join(OUT, 'README.txt'), 'Generated by scripts/store-assets.mjs — Chrome Web Store listing images.\n');
+  // the store wants 24-bit images without alpha
+  for (const f of readdirSync(OUT).filter((n) => n.endsWith('.png'))) {
+    const buf = readFileSync(join(OUT, f));
+    if (buf[25] !== 2) throw new Error(`${f}: PNG colour type ${buf[25]} (expected 2 = RGB, no alpha)`);
+  }
+  writeFileSync(join(OUT, 'README.txt'), 'Generated by scripts/store-assets.mjs — Chrome Web Store listing images (24-bit PNG, no alpha).\n');
   console.log(`store assets written to ${OUT}`);
 } catch (e) {
   if (dbgPage && process.env.FAIL_SHOT) await dbgPage.screenshot({ path: process.env.FAIL_SHOT }).catch(() => undefined);

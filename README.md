@@ -1,7 +1,10 @@
-# XDAG 钱包 · Chrome 浏览器插件
+# 藏锋 · Sheath — XDAG 自托管浏览器钱包
 
-一个安全、轻快、界面精致的 **XDAG 浏览器插件钱包**（Chrome / Edge / Brave 等 Chromium 内核浏览器，Manifest V3）。
+**藏锋（Sheath）** 是一个安全、轻快、界面精致的 **XDAG 浏览器插件钱包**（Chrome / Edge / Brave 等 Chromium 内核浏览器，Manifest V3）。
+名字取自 XDAG 的旧称 “Dagger（匕首）”——鞘藏锋芒，私钥不出本机。
 依据 XDAG 官方代码实现：[xdag](https://github.com/XDagger/xdag)（2018 C 客户端）、[xdagj](https://github.com/XDagger/xdagj) / [xdagj-crypto](https://github.com/XDagger/xdagj-crypto) 与 [XDAG Pro](https://github.com/XDagger/xdag-pro)，**同时兼容新旧两代钱包文件**。
+
+> 社区开发，开源；与 XDagger 官方团队无隶属或背书关系。
 
 <p align="center">
   <img src="docs/screenshots/14-popup-dark.png" width="240" alt="主页（深色）" />
@@ -57,11 +60,17 @@
 ```bash
 npm ci
 npm run build          # 输出到 dist/
-npm run package        # 可选：生成 release/xdag-wallet-<version>.zip
+npm run package        # 可选：生成 release/sheath-xdag-wallet-<version>.zip
 ```
 
 在 Chrome 打开 `chrome://extensions` → 打开“开发者模式” → “加载已解压的扩展程序” → 选择 `dist/` 目录。
 首次安装会自动打开欢迎页，可创建新钱包或导入已有钱包。
+
+### 上架 Chrome 网上应用店
+
+所需材料已备齐在 [`store/`](store/)：
+[上架步骤](store/SUBMISSION.md)、[商店文案与权限说明（可直接粘贴）](store/LISTING.md)、[隐私政策](store/PRIVACY.md)、
+[截图与宣传图](store/assets/)（`node scripts/store-assets.mjs` 生成）、[审核用测试钱包文件](store/reviewer-test-files/)。
 
 ### 导入 2018 旧钱包
 
@@ -106,7 +115,7 @@ scripts/         打包、图标、模拟节点、端到端测试
 
 ## English
 
-A Manifest V3 browser-extension wallet for **XDAG** that opens both **2018 C-client wallets** (`wallet.dat` + `dnet_key.dat`, dfslib cipher ported bit-for-bit) and **xdagj `wallet.data`** (v4, BCrypt + AES-192-CBC), as well as BIP39 phrases (`m/44'/586'/0'/0/i`, compatible with XDAG Pro) and raw private keys.
+**Sheath (藏锋)** is a Manifest V3 browser-extension wallet for **XDAG** (community-built, not affiliated with the XDagger team) that opens both **2018 C-client wallets** (`wallet.dat` + `dnet_key.dat`, dfslib cipher ported bit-for-bit) and **xdagj `wallet.data`** (v4, BCrypt + AES-192-CBC), as well as BIP39 phrases (`m/44'/586'/0'/0/i`, compatible with XDAG Pro) and raw private keys.
 It signs nonce-based account transfers byte-identical to xdagj's `Block`, can move balances held by 2018 block addresses to the new address format (like xdagj `xfertonew`), and exports an xdagj-compatible `wallet.data`.
 
 Keys live only in the background service worker, the vault is encrypted with PBKDF2-SHA256 (600k) + AES-256-GCM, the session key is kept in RAM-only `chrome.storage.session`, the wallet auto-locks on inactivity and screen lock, and the node's chain is verified before signing.

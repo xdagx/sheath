@@ -13,7 +13,9 @@ export default defineConfig(({ mode }) => ({
     emptyOutDir: true,
     target: 'chrome110',
     sourcemap: mode === 'development',
-    minify: mode !== 'development',
+    // Unminified on purpose: the Chrome Web Store reviews readable code faster, and size is irrelevant
+    // for a locally installed extension. Never obfuscate.
+    minify: false,
     modulePreload: false,
     rollupOptions: {
       input: {

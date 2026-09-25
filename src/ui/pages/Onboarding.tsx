@@ -26,6 +26,7 @@ export function Welcome() {
             <Icon name="shield" size={16} /> {t('featureSecure')}
           </li>
         </ul>
+        <p class="unofficial">{t('unofficialNote')}</p>
       </div>
       <div class="welcome-actions">
         {popup ? (

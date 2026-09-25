@@ -1204,6 +1204,17 @@ html[data-mode='tab'] .sheet-root {
   color: var(--primary);
 }
 
+.wrap {
+  white-space: normal;
+}
+
+.unofficial {
+  position: relative;
+  margin-top: 12px;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
 .welcome-actions {
   display: flex;
   flex-direction: column;
