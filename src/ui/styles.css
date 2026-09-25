@@ -1495,6 +1495,61 @@ html[data-mode='tab'] .sheet-root {
   color: var(--text-2);
 }
 
+/* old client folder: picker, divider, discovered block addresses */
+.filedrop.folderpick {
+  min-height: 64px;
+  border-color: var(--primary);
+  color: var(--text);
+}
+
+.filedrop.folderpick > .icon {
+  color: var(--primary);
+}
+
+.or-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-3);
+  font-size: 12px;
+}
+
+.or-divider::before,
+.or-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.found-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.found-blocks .select-row .legacy-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.scan-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.scan-progress > span {
+  flex: 1;
+}
+
+.warn-mark {
+  color: var(--warning);
+  font-family: var(--font);
+}
+
 /* ------------------------------------------------------------------ home */
 .home {
   display: flex;

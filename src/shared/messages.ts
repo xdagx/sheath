@@ -33,8 +33,16 @@ export interface RequestMap {
     | { kind: 'legacy'; walletDat: FilePayload; dnetKeyDat: FilePayload | null; filePassword: string },
     ImportPreview,
   ];
-  /** Commit a staged import. If the vault does not exist yet, `newVaultPassword` creates it. */
-  commitImport: [{ token: string; addresses: string[]; newVaultPassword?: string; legacyBlocks?: string[] }, WalletState];
+  /**
+   * Commit a staged import. If the vault does not exist yet, `newVaultPassword` creates it.
+   * `legacyBlocks` are old block addresses typed by the user (attached to the first account);
+   * `ownedBlocks` were found in the old client's storage folder together with the key that owns
+   * them, and are attached to that key's account — also when it was imported before.
+   */
+  commitImport: [
+    { token: string; addresses: string[]; newVaultPassword?: string; legacyBlocks?: string[]; ownedBlocks?: Array<{ block: string; owner: string }> },
+    WalletState,
+  ];
   cancelImport: [{ token: string }, { ok: true }];
 
   addHdAccount: [{ name?: string }, WalletState];

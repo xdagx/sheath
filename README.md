@@ -18,7 +18,7 @@
 | --- | --- |
 | 钱包 | 创建钱包（12 词 BIP39 助记词 + 备份校验）；多账户（HD 派生 `m/44'/586'/0'/0/i`）；账户重命名 / 移除 |
 | 导入 | 助记词（12/15/18/21/24 词）· 私钥（hex）· **xdagj `wallet.data`** · **2018 版 `wallet.dat` + `dnet_key.dat`** |
-| 旧钱包 | 查看 2018 版 32 位区块地址余额，并一键**转移到新地址**（等价于 xdagj `xfertonew`），自动识别该区块属于钱包里的哪把密钥 |
+| 旧钱包 | 选择旧钱包文件夹即可从 `storage/` **自动找到 2018 版 32 位旧地址**及余额（与 C 客户端判断“自己的区块”的算法一致），并一键**转移到新地址**（等价于 xdagj `xfertonew`），自动使用拥有该区块的那把密钥 |
 | 转账 | 地址校验（Base58Check）、全部金额、备注（ASCII ≤ 32）、加速手续费（参考节点平均手续费）、确认页、对方实收金额预览 |
 | 收款 | 二维码、复制地址 |
 | 记录 | 交易记录（分页、按日期分组）、待确认交易跟踪、交易详情（状态 / 对手方 / 手续费 / 备注）、区块浏览器链接 |
@@ -38,7 +38,7 @@
 交易：512 字节区块，与 xdagj `io.xdag.core.Block` **逐字节一致**（账户转账带 nonce；旧区块余额转移使用 `XDAG_FIELD_IN` 且无 nonce）。
 详见 [docs/FORMATS.md](docs/FORMATS.md)。
 
-> 2018 旧钱包说明：旧网络中余额记录在“区块地址”上（钱包界面显示的 32 位地址）。导入 `wallet.dat` 后，每把私钥会得到一个新格式地址；把旧界面显示的 32 位地址填入“旧钱包地址”，即可看到该区块余额并转移到新地址。
+> 2018 旧钱包说明：旧网络中余额记录在“区块地址”上（钱包界面显示的 32 位地址），这个地址无法仅凭私钥算出。选择整个旧钱包文件夹时，插件会在其中的 `storage/` 里找出由你的密钥签名的区块，自动列出旧地址和余额；只选择 `wallet.dat` 时，可手动填入旧地址。
 
 ## 安全设计
 
@@ -74,15 +74,15 @@ npm run package        # 可选：生成 release/sheath-xdag-wallet-<version>.zi
 
 ### 导入 2018 旧钱包
 
-1. 找到旧客户端目录（例如 `C:\xdag\` 或 XDagWallet 文件夹，与 `storage/` 同级）中的 `wallet.dat` 与 `dnet_key.dat`。
-2. 插件中选择“导入钱包 → 2018 旧钱包”，选择两个文件并输入旧钱包密码（没有设置过密码则留空）。
-3. 选择要导入的账户；在“旧钱包地址”中填入旧界面显示的 32 位地址（可选）。
-4. 首页“旧钱包地址”卡片中点击“转移”，即可把旧区块余额转到新地址（手续费 0.1 XDAG）。
+1. 插件中选择“导入钱包 → 2018 旧钱包”，点“选择文件夹”，选中旧客户端目录（例如 `C:\xdag\` 或 XDagWallet 文件夹，里面有 `wallet.dat`、`dnet_key.dat` 和 `storage/`）。文件只在本机读取；Chrome 会弹窗确认。
+2. 输入旧钱包密码（没有设置过密码则留空）。
+3. 插件自动在 `storage/` 中找出旧地址并查询余额；勾选要添加的账户和旧地址。没有 `storage/` 时，可只选 `wallet.dat` + `dnet_key.dat` 并手动填入 32 位旧地址。已经导入过的钱包再导入一次文件夹，找到的旧地址会补充到原账户上。
+4. 首页“旧钱包地址”卡片中点击“转移”，即可把旧区块余额转到新地址（手续费 0.1 XDAG）。标 ⚠ 的旧地址签名格式较早，当前 xdagj 节点可能拒绝转出（节点限制，余额仍在旧地址上）。
 
 ## 开发
 
 ```bash
-npm test               # 89 个单元 / 集成测试（与官方 Java / C 实现的交叉测试向量对比）
+npm test               # 单元 / 集成测试（与官方 Java / C 实现的交叉测试向量对比）
 npm run typecheck
 npm run mock-node      # 本地模拟 xdagj RPC 节点（http://127.0.0.1:18545），用于界面调试
 npm run build && npm run e2e   # Playwright 端到端测试（真实加载插件 + 模拟节点）
@@ -97,6 +97,7 @@ npm run build && npm run e2e   # Playwright 端到端测试（真实加载插件
 
 - `xdagj-vectors.json`：[`tools/vectors/xdagj/VectorGen.java`](tools/vectors/xdagj/VectorGen.java) 调用 xdagj 0.8.3 本身的 `Wallet`、`Block`、BouncyCastle `BCrypt`、`Signer` 等类生成：BIP44 派生、签名、BCrypt、AES、真实 `wallet.data` 文件、签名后的交易区块、金额换算。
 - `legacy-vectors.json`：[`tools/vectors/legacy/gen_legacy.c`](tools/vectors/legacy/gen_legacy.c) 链接原版 `dfslib` / `dfsrsa` 源码，按 `dnet_crypt.c` 与 `wallet.c` 的流程生成 `dnet_key.dat` 与 `wallet.dat`（含空密码、中文 / 俄文密码、emoji 密码、ARM 短密钥等边界情况）。
+- `legacy-storage/`：[`tools/vectors/legacy/gen_storage.c`](tools/vectors/legacy/gen_storage.c) 链接原版客户端的 `crypt.c`、`hash.c`、`address.c`、`storage.c`，按 `xdag_create_block` 的字段布局生成地址区块、转账区块、矿池首区块、挖矿区块、他人区块和测试网区块，用 `xdag_storage_save` 写成真实的 `storage/` 目录（含损坏文件），并用客户端自己的 `valid_signature` 判定归属。另外也用 goXdagWallet 测试中的真实签名做了交叉验证。
 
 本插件生成的交易区块与 xdagj 生成的结果逐字节比对一致。
 

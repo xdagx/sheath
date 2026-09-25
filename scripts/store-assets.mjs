@@ -13,6 +13,7 @@ import { sha256 } from '@noble/hashes/sha2.js';
 import { ripemd160 } from '@noble/hashes/legacy.js';
 import { createBase58check } from '@scure/base';
 import { createMockNode } from './mock-node.mjs';
+import { pickFolder } from './pick-folder.mjs';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
@@ -29,14 +30,16 @@ const pubHex = (h) => Buffer.from(secp256k1.getPublicKey(Buffer.from(h, 'hex'), 
 const legacy = JSON.parse(readFileSync('tests/fixtures/legacy-vectors.json', 'utf8'))[0];
 const MAIN = '8c1b2a3f4e5d6c7b8a99a8b7c6d5e4f3021324354657687980a1b2c3d4e5f607';
 const PEER = legacy.privateKeys[0];
-const OLD_BLOCK = 'gKNRtSL1pUaTpzMuPMznKw49ILtP6qX3';
+// a wallet address block of the old wallet's default key, written by the official C client code
+const OLD = JSON.parse(readFileSync('tests/fixtures/legacy-storage/expected.json', 'utf8')).blocks.find((b) => b.name === 'address_default_lowS');
+const OLD_BLOCK = OLD.address;
 // recipient for the send screenshot: not one of the wallet's own accounts
 const STRANGER = '5f0e1d2c3b4a59687766554433221100ffeeddccbbaa99887766554433221101';
 const PASSWORD = 'store-assets-pass';
 
 const node = createMockNode({
   fund: { [addrOf(MAIN)]: 12850.42, [addrOf(PEER)]: 5000, [OLD_BLOCK]: 3276.8 },
-  legacyOwners: { [OLD_BLOCK]: pubHex(legacy.privateKeys[1]) },
+  legacyOwners: { [OLD_BLOCK]: pubHex(legacy.privateKeys[2]) },
 });
 await new Promise((r) => node.server.listen(0, '127.0.0.1', r));
 const RPC = `http://127.0.0.1:${node.server.address().port}`;
@@ -48,6 +51,17 @@ const manifest = JSON.parse(readFileSync(join(ext, 'manifest.json'), 'utf8'));
 manifest.host_permissions.push('http://127.0.0.1/*');
 writeFileSync(join(ext, 'manifest.json'), JSON.stringify(manifest));
 writeFileSync(join(work, 'wallet.dat'), Buffer.from(legacy.walletDat, 'base64'));
+// the old client folder: wallet files next to storage/AA/BB/CC/DD.dat holding the address block
+const oldFolder = join(work, 'xdag');
+{
+  const t = Buffer.from(OLD.raw, 'hex').readBigUInt64LE(16);
+  const hx = (shift) => ((t >> BigInt(shift)) & 0xffn).toString(16).padStart(2, '0');
+  const dir = join(oldFolder, 'storage', hx(40), hx(32), hx(24));
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, `${hx(16)}.dat`), Buffer.from(OLD.raw, 'hex'));
+  writeFileSync(join(oldFolder, 'wallet.dat'), Buffer.from(legacy.walletDat, 'base64'));
+  writeFileSync(join(oldFolder, 'dnet_key.dat'), Buffer.from(legacy.dnetKeyDat, 'base64'));
+}
 writeFileSync(join(work, 'dnet_key.dat'), Buffer.from(legacy.dnetKeyDat, 'base64'));
 
 const settle = (p) => p.waitForTimeout(550);
@@ -114,18 +128,17 @@ try {
   };
   const legacyFlow = async (lang, commit) => {
     const L = lang === 'zh'
-      ? { pw: '钱包文件密码', cont: '继续', select: '选择账户', old: '旧钱包地址', imp: /导入 \d 个账户/ }
-      : { pw: 'Wallet file password', cont: 'Continue', select: 'Select accounts', old: 'Old wallet addresses', imp: /Import \d account/ };
+      ? { pw: '钱包文件密码', cont: '继续', select: '选择账户', imp: /导入 \d 个账户/ }
+      : { pw: 'Wallet file password', cont: 'Continue', select: 'Select accounts', imp: /Import \d account/ };
     await page.goto(`${base}/app.html#/import?tab=legacy`);
-    const files = page.locator('input[type=file]');
-    await files.nth(0).setInputFiles(join(work, 'wallet.dat'));
-    await files.nth(1).setInputFiles(join(work, 'dnet_key.dat'));
+    await pickFolder(page.locator('.folderpick input[type=file]'), oldFolder);
+    await page.locator('.notice-success').waitFor();
     await page.getByLabel(L.pw).fill(legacy.password);
     await settle(page);
     raw[`legacy-import-${lang}`] = await page.locator('#app').screenshot();
     await page.getByRole('button', { name: L.cont }).click();
     await page.getByText(L.select).waitFor();
-    await page.getByLabel(L.old).fill(OLD_BLOCK);
+    await page.locator('.found-blocks .select-row.on', { hasText: '3,276.8' }).waitFor();
     await settle(page);
     raw[`legacy-preview-${lang}`] = await page.locator('#app').screenshot();
     if (commit) {
@@ -218,14 +231,14 @@ try {
   const frames = {
     en: [
       { shot: ['home-en'], title: 'Your XDAG, kept close', sub: 'Balance, activity and accounts at a glance. Open source, dark & light themes, English & 中文.' },
-      { shot: ['legacy-import-en', 'legacy-home-en'], title: 'Rescue your 2018 XDAG wallet', sub: 'Opens the original wallet.dat + dnet_key.dat and moves old block-address balances to your new address.' },
+      { shot: ['legacy-import-en', 'legacy-home-en'], title: 'Rescue your 2018 XDAG wallet', sub: 'Choose the old wallet folder: your old addresses and balances are found automatically, ready to move to your new address.' },
       { shot: ['send-en'], title: 'Clear fees, no surprises', sub: 'See exactly what the recipient receives before you sign. Nonce and network are checked for you.' },
       { shot: ['accounts-en', 'legacy-preview-en'], title: 'Every XDAG wallet format', sub: 'Recovery phrase, private key, xdagj wallet.data and 2018 wallet.dat — plus export to wallet.data.' },
       { shot: ['receive-en'], title: 'Keys never leave your device', sub: 'Encrypted vault, auto-lock, no tracking, no remote code. Open source.' },
     ],
     zh: [
       { shot: ['home-zh'], title: '你的 XDAG，稳稳藏好', sub: '余额、交易记录、多账户一目了然。开源，深浅主题，中英文界面。' },
-      { shot: ['legacy-import-zh', 'legacy-home-zh'], title: '找回 2018 年的 XDAG 老钱包', sub: '直接打开原版 wallet.dat + dnet_key.dat，把旧区块地址中的余额转到新地址。' },
+      { shot: ['legacy-import-zh', 'legacy-home-zh'], title: '找回 2018 年的 XDAG 老钱包', sub: '选择老钱包文件夹，自动找到旧地址和余额，一键转到新地址。' },
       { shot: ['send-zh'], title: '手续费清清楚楚', sub: '签名前就能看到对方实收金额；nonce 与网络由钱包自动校验。' },
       { shot: ['accounts-zh', 'legacy-preview-zh'], title: '新老钱包格式全兼容', sub: '助记词、私钥、xdagj wallet.data、2018 wallet.dat，并可导出 wallet.data。' },
       { shot: ['unlock-zh', 'receive-zh'], title: '私钥只在你的设备上', sub: '本地加密金库、自动锁定、无追踪、无远程代码，开源可审计。' },

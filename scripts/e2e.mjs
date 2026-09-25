@@ -12,6 +12,7 @@ import { sha256 } from '@noble/hashes/sha2.js';
 import { ripemd160 } from '@noble/hashes/legacy.js';
 import { createBase58check } from '@scure/base';
 import { createMockNode } from './mock-node.mjs';
+import { pickFolder } from './pick-folder.mjs';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
@@ -33,7 +34,15 @@ const OLD_BLOCK = 'gKNRtSL1pUaTpzMuPMznKw49ILtP6qX3';
 const PASSWORD = 'e2e-password-123';
 
 // ---- mock node
-const node = createMockNode({ fund: { [addrOf(K1)]: 1000, [OLD_BLOCK]: 250.5 }, legacyOwners: { [OLD_BLOCK]: pubHex(K2) } });
+// blocks of the same wallet in a storage/ folder written by the official C client code
+const storageVectors = JSON.parse(readFileSync('tests/fixtures/legacy-storage/expected.json', 'utf8'));
+const blockNamed = (n) => storageVectors.blocks.find((b) => b.name === n).address;
+const MIDDLE_BLOCK = blockNamed('address_middle'); // owned by K2
+const DEFAULT_BLOCK = blockNamed('address_default_lowS'); // owned by K3, the default key
+const node = createMockNode({
+  fund: { [addrOf(K1)]: 1000, [OLD_BLOCK]: 250.5, [MIDDLE_BLOCK]: 77.7, [DEFAULT_BLOCK]: 12 },
+  legacyOwners: { [OLD_BLOCK]: pubHex(K2), [MIDDLE_BLOCK]: pubHex(K2), [DEFAULT_BLOCK]: pubHex(K3) },
+});
 await new Promise((r) => node.server.listen(0, '127.0.0.1', r));
 const RPC = `http://127.0.0.1:${node.server.address().port}`;
 
@@ -46,6 +55,11 @@ manifest.host_permissions.push('http://127.0.0.1/*');
 writeFileSync(join(ext, 'manifest.json'), JSON.stringify(manifest, null, 2));
 writeFileSync(join(work, 'wallet.dat'), Buffer.from(legacy.walletDat, 'base64'));
 writeFileSync(join(work, 'dnet_key.dat'), Buffer.from(legacy.dnetKeyDat, 'base64'));
+// an old client folder: wallet files next to storage/ and storage-testnet/
+const oldFolder = join(work, 'xdag-2018');
+cpSync('tests/fixtures/legacy-storage', oldFolder, { recursive: true, filter: (p) => !p.endsWith('expected.json') });
+cpSync(join(work, 'wallet.dat'), join(oldFolder, 'wallet.dat'));
+cpSync(join(work, 'dnet_key.dat'), join(oldFolder, 'dnet_key.dat'));
 
 const errors = [];
 async function launch(name) {
@@ -175,7 +189,7 @@ try {
 
   step('import the 2018 wallet.dat + dnet_key.dat');
   await page.goto(`${base}/app.html#/import?tab=legacy`);
-  const files = page.locator('input[type=file]');
+  const files = page.locator('.filedrop:not(.folderpick) input[type=file]');
   await files.nth(0).setInputFiles(join(work, 'wallet.dat'));
   await files.nth(1).setInputFiles(join(work, 'dnet_key.dat'));
   await page.getByLabel('Wallet file password').fill('wrong');
@@ -208,6 +222,36 @@ try {
   assert.equal(tx3.amount, '250500000000');
   await page.getByRole('button', { name: 'Done' }).click();
 
+  step('old client folder: addresses found in storage/ and attached to their keys');
+  await page.goto(`${base}/app.html#/import?tab=legacy`);
+  await pickFolder(page.locator('.folderpick input[type=file]'), oldFolder);
+  await page.getByText(/block files from storage\/ found/).waitFor();
+  await page.getByLabel('Wallet file password').fill(legacy.password);
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByText('Select accounts').waitFor();
+  const owned = storageVectors.blocks.filter((b) => b.owner >= 0);
+  await page.locator('.found-blocks .select-row').nth(owned.length - 1).waitFor();
+  assert.equal(await page.locator('.found-blocks .select-row').count(), owned.length);
+  // pre-selected: the blocks the node knows with a balance; unknown and testnet ones are not
+  await page.getByRole('button', { name: 'Add 2 old address(es)' }).waitFor();
+  assert.equal(await page.locator('.found-blocks .select-row', { hasText: 'Not on this node' }).count(), owned.length - 3);
+  assert.equal(await page.locator('.found-blocks .select-row', { hasText: 'Other network' }).count(), 1);
+  await shot(page, '12b-legacy-folder-preview');
+  await page.getByRole('button', { name: 'Add 2 old address(es)' }).click();
+  await page.locator('.legacy-row', { hasText: DEFAULT_BLOCK.slice(0, 8) }).waitFor();
+  await page.locator('.legacy-row', { hasText: '12 XDAG' }).waitFor();
+  await page.locator('.account-chip').click();
+  await page.locator('.account-item', { hasText: 'Legacy 2' }).click();
+  await page.locator('.legacy-row', { hasText: MIDDLE_BLOCK.slice(0, 8) }).getByRole('button', { name: 'Move' }).click();
+  await page.waitForFunction(() => document.querySelector('input[inputmode=decimal]')?.value === '77.7');
+  await page.getByRole('button', { name: 'Review' }).click();
+  await page.getByRole('button', { name: 'Confirm & send' }).click();
+  await page.getByText('Transaction sent').waitFor();
+  const tx4 = node.log.at(-1);
+  assert.equal(tx4.from, MIDDLE_BLOCK);
+  assert.equal(tx4.to, addrOf(K2));
+  await page.getByRole('button', { name: 'Done' }).click();
+
   step('lock and unlock');
   await page.getByRole('button', { name: 'Lock' }).click();
   await page.getByText('Welcome back').waitFor();
@@ -228,7 +272,7 @@ try {
   await popup.locator('.balance-card').waitFor();
   await popup.waitForTimeout(500);
   await popup.screenshot({ path: SHOTS ? join(SHOTS, '14-popup-dark.png') : join(work, 'p.png') });
-  await popup.getByRole('button', { name: /Legacy 1/ }).click();
+  await popup.locator('.account-chip').click();
   await popup.waitForTimeout(500);
   if (SHOTS) await popup.screenshot({ path: join(SHOTS, '16-popup-accounts-dark.png') });
   await popup.keyboard.press('Escape');

@@ -73,9 +73,12 @@ function cacheKey(): string {
 
 export const balances = signal<Record<string, CachedBalance>>({});
 export const nodeError = signal<string | null>(null);
+/** addresses the current node does not know (xdagj answers an error, e.g. an old block missing from its snapshot) */
+export const unknownOnNode = signal<Record<string, true>>({});
 
 export function loadCachedBalances(): void {
   const key = cacheKey();
+  unknownOnNode.value = {};
   chrome.storage.session.get(key).then(
     (r) => {
       if (key !== cacheKey()) return;
@@ -97,11 +100,16 @@ export async function refreshBalance(address: string): Promise<bigint | null> {
     const next = { ...balances.value, [address]: { value: value.toString(), at: Date.now() } };
     balances.value = next;
     nodeError.value = null;
+    if (unknownOnNode.value[address]) {
+      const { [address]: _, ...rest } = unknownOnNode.value;
+      unknownOnNode.value = rest;
+    }
     if (wallet.value?.unlocked) void chrome.storage.session.set({ [cacheKey()]: next }).catch(() => undefined);
     return value;
   } catch (e) {
     // a JSON-RPC error means the node answered (e.g. unknown block address): not a connectivity issue
     if (!(e instanceof RpcError) || e.kind === 'transport') nodeError.value = (e as Error).message;
+    else unknownOnNode.value = { ...unknownOnNode.value, [address]: true };
     return null;
   }
 }
@@ -109,6 +117,7 @@ export async function refreshBalance(address: string): Promise<bigint | null> {
 /** Forgets per-device UI caches (theme, balances) after the wallet was reset. */
 export function clearLocalCaches(): void {
   balances.value = {};
+  unknownOnNode.value = {};
   try {
     localStorage.clear();
   } catch {

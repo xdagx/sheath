@@ -49,6 +49,31 @@ xdagj only accepts 12-word phrases in this file; the exporter writes an empty ph
 * Password check: in a correctly decrypted `dnet_key.dat` the private and public dfsrsa keys share
   the modulus (upper half of each key, after detecting repeated short ARM keys).
 
+### 3a. Finding the old addresses in `storage/`
+
+The old balance lives on **blocks** (the 32-character address the 2018 client showed), not on keys,
+and a block's address cannot be computed from the key alone (it hashes the block time and a
+random-k signature). The client kept its own blocks in `storage/` (`storage-testnet/` on testnet),
+so the address is recovered from there, the same way the client marked blocks as ours (BI_OURS):
+
+* Files: `storage/AA/BB/CC/DD.dat`, `AA..DD` = hex of `xtime >> 40, 32, 24, 16`: raw 512-byte
+  blocks of one 64-second frame, appended in arrival order. Every directory level also holds a
+  4096-byte `sums.dat`, which is not block data. Wallet/miner-mode clients store only their own
+  blocks; a full node stores the whole network (the scan then stops at a verification budget).
+* Header checks as in `add_block_nolock`: field 0 type `1` (testnet: `8` or `1`), `time >> 16`
+  equals the file's frame, time ≥ era, no type `8` field later, an even number (≥ 2) of
+  `SIGN_OUT` fields.
+* Ownership (`valid_signature` / `hash_for_signature`): for each odd `SIGN_OUT` field *r* and the
+  next `SIGN_OUT` *s*, copy the block, zero bytes 0..7 and every `SIGN_IN`/`SIGN_OUT` field from
+  *r* on, append the candidate key's 33-byte compressed public key and check ECDSA(r, s) over
+  SHA256d of those 545 bytes, for every wallet.dat key (address blocks carry no public key).
+  2018 signatures are not S-normalised: high-S must verify.
+* Address: Base64 of the first 24 bytes of SHA256d(block with bytes 0..7 zeroed).
+* A spend must be signed by the owning key. Current xdagj rejects non-canonical (high-S)
+  signatures when it checks an old block kept as raw data in its snapshot
+  (`BlockchainImpl.verifySignatureFromSnapshot`), so such blocks may not be movable yet; the
+  import screen marks them.
+
 ## 4. Transaction block (512 bytes = 16 × 32-byte fields)
 
 Field 0 (header): `transport u64 = 0 | types u64 | time u64 | fee u64` (little-endian).

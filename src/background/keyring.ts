@@ -45,6 +45,8 @@ interface StagedImport {
 
 const newId = () => toHex(randomBytes(8));
 const PASSWORD_MIN = 8;
+/** old block addresses kept per account (each one is refreshed on the home screen) */
+const MAX_LEGACY_BLOCKS = 50;
 
 function lang(): 'zh' | 'en' {
   return (globalThis.navigator?.language ?? 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
@@ -401,6 +403,7 @@ export class Keyring {
       encrypted,
       accounts: staged.keys.map((k, index) => ({
         address: k.address,
+        publicKey: toHex(getPublicKey(k.priv)),
         index,
         alreadyExists: existing.has(k.address),
         ...(k.hdIndex !== undefined ? { hdIndex: k.hdIndex } : {}),
@@ -423,7 +426,19 @@ export class Keyring {
       const known = new Set(initialized ? (await this.requireUnlocked()).accounts.map((a) => a.address) : []);
       const wanted = new Set(req.addresses);
       const chosen = staged.keys.filter((k) => wanted.has(k.address) && !known.has(k.address));
-      if (!chosen.length) throw new WalletError('nothing_to_import');
+
+      // old block addresses: found ones go to the account of their owning key, typed ones to the first account
+      const owned = new Map<string, string[]>();
+      for (const o of req.ownedBlocks ?? []) {
+        const block = typeof o?.block === 'string' ? o.block.trim() : '';
+        if (!isLegacyAddress(block) || !staged.keys.some((k) => k.address === o.owner)) throw new WalletError('invalid_block_address');
+        owned.set(o.owner, [...new Set([...(owned.get(o.owner) ?? []), block])]);
+      }
+      const typed = [...new Set((req.legacyBlocks ?? []).map((b) => b.trim()).filter(isLegacyAddress))];
+      const typedOwner = chosen[0]?.address ?? (known.has(staged.keys[0]!.address) ? staged.keys[0]!.address : null);
+      if (typedOwner && typed.length) owned.set(typedOwner, [...new Set([...(owned.get(typedOwner) ?? []), ...typed])]);
+      const toExisting = [...owned.keys()].filter((a) => known.has(a));
+      if (!chosen.length && !toExisting.length) throw new WalletError('nothing_to_import');
       if (!initialized) {
         if (!req.newVaultPassword) throw new WalletError('weak_password');
         await this.createStorage(req.newVaultPassword, { version: 1, keyrings: [], accounts: [], selectedAccountId: null });
@@ -440,7 +455,13 @@ export class Keyring {
           vault.keyrings.push(hdKeyring);
         }
       }
-      const legacyBlocks = (req.legacyBlocks ?? []).map((b) => b.trim()).filter(isLegacyAddress);
+      const merged = new Map<string, string[]>();
+      for (const [owner, blocks] of owned) {
+        const before = known.has(owner) ? (vault.accounts.find((a) => a.address === owner)?.legacyBlocks ?? []) : [];
+        const all = [...new Set([...before, ...blocks])];
+        if (all.length > MAX_LEGACY_BLOCKS) throw new WalletError('too_many_blocks');
+        merged.set(owner, all);
+      }
       let counter = vault.accounts.filter((a) => a.source === source).length;
       let first: Account | null = null;
       for (const k of chosen) {
@@ -462,13 +483,17 @@ export class Keyring {
           keyringId,
           ...(hdKeyring && k.hdIndex !== undefined ? { hdIndex: k.hdIndex } : {}),
           groupId,
-          legacyBlocks: first ? [] : legacyBlocks,
+          legacyBlocks: merged.get(k.address) ?? [],
           createdAt: Date.now(),
         };
         first ??= account;
         vault.accounts.push(account);
       }
-      vault.selectedAccountId = first!.id;
+      for (const owner of toExisting) {
+        const acct = vault.accounts.find((a) => a.address === owner);
+        if (acct) acct.legacyBlocks = merged.get(owner)!;
+      }
+      vault.selectedAccountId = first?.id ?? vault.accounts.find((a) => a.address === toExisting[0])?.id ?? vault.selectedAccountId;
       this.cancelImport(req.token);
       await this.persist();
     });
@@ -564,7 +589,7 @@ export class Keyring {
       const vault = await this.requireUnlocked();
       const clean = [...new Set(blocks.map((b) => b.trim()).filter(Boolean))];
       if (clean.some((b) => !isLegacyAddress(b))) throw new WalletError('invalid_block_address');
-      if (clean.length > 50) throw new WalletError('too_many_blocks');
+      if (clean.length > MAX_LEGACY_BLOCKS) throw new WalletError('too_many_blocks');
       this.account(vault, id).legacyBlocks = clean;
       await this.persist();
     });

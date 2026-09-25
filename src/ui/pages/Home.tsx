@@ -25,6 +25,7 @@ import {
   selectedAccount,
   settings,
   toastError,
+  unknownOnNode,
   wallet,
 } from '../state';
 
@@ -253,7 +254,9 @@ export function Home() {
                   </span>
                   <span class="legacy-main">
                     <span class="mono">{middle(b, 8, 8)}</span>
-                    <span class="row-sub">{balances.value[b] ? `${fmtAmount(balanceOf(b), { hide, decimals: 4 })} XDAG` : <Skeleton width={70} height={11} />}</span>
+                    <span class="row-sub">
+                      {balances.value[b] ? `${fmtAmount(balanceOf(b), { hide, decimals: 4 })} XDAG` : unknownOnNode.value[b] ? t('notOnNode') : <Skeleton width={70} height={11} />}
+                    </span>
                   </span>
                   <Button size="sm" variant="secondary" disabled={!balanceOf(b)} onClick={() => navigate('/legacy-send', { block: b })}>
                     {t('moveFunds')}

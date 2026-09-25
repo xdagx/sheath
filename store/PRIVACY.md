@@ -7,7 +7,8 @@ _Last updated / 最后更新：2026-09-25_
 Sheath — Self-Custody Wallet for XDAG ("the extension", Chinese name 藏锋) is a self-custody wallet for the XDAG cryptocurrency. It is developed by an
 independent community publisher and is not affiliated with the XDAG / XDagger core team.
 
-**What stays on your device.** Your recovery phrase and private keys (including keys imported from wallet
+**What stays on your device.** Wallet files and folders you import (for example an old client folder with
+its `storage/` directory) are read inside the extension on your device and are never uploaded. Your recovery phrase and private keys (including keys imported from wallet
 files) and your account list are encrypted with your password (PBKDF2-SHA256 + AES-256-GCM) and stored only in
 your browser's extension storage. The recovery phrase and private keys never leave the extension; your password
 is never stored. Settings, your address book (names, addresses, notes) and a short list of recently sent
@@ -47,7 +48,7 @@ extension at any time; uninstalling removes all locally stored data.
 
 藏锋 — XDAG 自托管钱包（英文名 Sheath，以下简称“本插件”）是 XDAG 加密货币的自托管钱包，由独立的社区开发者发布，与 XDAG / XDagger 核心团队无隶属关系。
 
-**保存在本机的数据。** 助记词、私钥（包括从钱包文件导入的密钥）和账户列表均使用你的密码加密（PBKDF2-SHA256 + AES-256-GCM），只保存在浏览器的扩展存储中；助记词和私钥绝不会离开本插件，你的密码不会被保存。设置、地址簿（名称、地址、备注）以及最近发出的转账记录（地址、金额、手续费、备注；最多 100 条、最长保留 3 天）以未加密形式保存在本地扩展存储中；钱包解锁期间，余额缓存保存在仅存于内存的会话存储中。以上内容都不会发送给开发者。
+**保存在本机的数据。** 你导入的钱包文件和文件夹（例如带 `storage/` 目录的旧客户端文件夹）只在本机由插件读取，从不上传。助记词、私钥（包括从钱包文件导入的密钥）和账户列表均使用你的密码加密（PBKDF2-SHA256 + AES-256-GCM），只保存在浏览器的扩展存储中；助记词和私钥绝不会离开本插件，你的密码不会被保存。设置、地址簿（名称、地址、备注）以及最近发出的转账记录（地址、金额、手续费、备注；最多 100 条、最长保留 3 天）以未加密形式保存在本地扩展存储中；钱包解锁期间，余额缓存保存在仅存于内存的会话存储中。以上内容都不会发送给开发者。
 
 **网络通信。** 仅发送钱包运行所必需的请求，且只发送到你选择的 XDAG RPC 节点（默认 `mainnet-rpc.xdagj.org` / `testnet-rpc.xdagj.org`，或你自行添加的节点）：你的公开地址（用于查询余额、nonce 和交易记录），以及你签名并确认广播的交易。默认节点由第三方运营，而非本插件开发者；与任何网站服务器一样，你所使用的节点可以看到你的 IP 地址以及你查询的地址。写入 XDAG 网络的内容本身就是公开的。打开区块浏览器链接时，页面由你的浏览器从区块浏览器网站加载。
 

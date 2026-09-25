@@ -8,6 +8,8 @@ export default defineConfig(({ mode }) => ({
   plugins: [preact()],
   resolve: { alias: { '@': resolve(import.meta.dirname, 'src') } },
   base: './',
+  // the storage-scan worker is loaded as a module worker from the extension's own origin
+  worker: { format: 'es' },
   build: {
     outDir: 'dist',
     emptyOutDir: true,

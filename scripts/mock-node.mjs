@@ -14,6 +14,13 @@ const b58 = createBase58check(sha256);
 const NANO = 1_000_000_000n;
 const MIN_FEE = 100_000_000n;
 const sha256d = (b) => sha256(sha256(b));
+const isAccount = (a) => {
+  try {
+    return b58.decode(a).length === 20;
+  } catch {
+    return false;
+  }
+};
 const hex = (b) => Buffer.from(b).toString('hex');
 
 export function createMockNode({ netType = 'mainnet', fund = {}, legacyOwners = {} } = {}) {
@@ -140,7 +147,11 @@ export function createMockNode({ netType = 'mainnet', fund = {}, legacyOwners = 
   const handlers = {
     xdag_netType: () => netType,
     xdag_blockNumber: () => '1843000',
-    xdag_getBalance: ([a]) => fmt(balances.get(a) ?? 0n),
+    // like xdagj: an unknown old block address is an internal error (-32603), an unknown account is 0
+    xdag_getBalance: ([a]) => {
+      if (!balances.has(a) && !isAccount(a)) throw new Error('Internal error');
+      return fmt(balances.get(a) ?? 0n);
+    },
     xdag_getTransactionNonce: ([a]) => String((nonces.get(a) ?? 0n) + 1n),
     xdag_getAverageFee: () => '0.12',
     xdag_sendRawTransaction: ([raw]) => sendRaw(raw),
@@ -162,9 +173,14 @@ export function createMockNode({ netType = 'mainnet', fund = {}, legacyOwners = 
         return res.end();
       }
       const h = handlers[msg.method];
-      const reply = h
-        ? { jsonrpc: '2.0', id: msg.id, result: h(msg.params ?? []) }
-        : { jsonrpc: '2.0', id: msg.id, error: { code: -32601, message: 'Method not found' } };
+      let reply;
+      try {
+        reply = h
+          ? { jsonrpc: '2.0', id: msg.id, result: h(msg.params ?? []) }
+          : { jsonrpc: '2.0', id: msg.id, error: { code: -32601, message: 'Method not found' } };
+      } catch (e) {
+        reply = { jsonrpc: '2.0', id: msg.id, error: { code: -32603, message: e.message } };
+      }
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify(reply));
     });

@@ -84,6 +84,8 @@ export interface WalletState {
 
 export interface ImportPreviewAccount {
   address: string;
+  /** compressed public key (hex), used to recognise the account's old blocks */
+  publicKey: string;
   /** index in the imported file, for display */
   index: number;
   alreadyExists: boolean;

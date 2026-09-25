@@ -429,6 +429,41 @@ export function FileDrop({ label, file, onFile, accept, hint }: { label: string;
   );
 }
 
+/** Picks a whole folder (the old client's directory); the files are read locally, nothing is uploaded. */
+export function FolderPick({ label, summary, onFolder, hint }: { label: string; summary: string | null; onFolder: (files: File[]) => void; hint?: string }) {
+  const input = useRef<HTMLInputElement>(null);
+  // not in Preact's JSX types; Preact sets it as the element property
+  const directory = { webkitdirectory: true } as JSX.HTMLAttributes<HTMLInputElement>;
+  return (
+    <div class="field">
+      <div class="field-label">{label}</div>
+      <div
+        class={`filedrop folderpick ${summary ? 'has-file' : ''}`}
+        role="button"
+        tabIndex={0}
+        onClick={() => input.current?.click()}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && input.current?.click()}
+      >
+        <Icon name="folder" size={20} />
+        <span class="filedrop-text">{summary ?? t('chooseFolder')}</span>
+        <input
+          ref={input}
+          type="file"
+          hidden
+          multiple
+          {...directory}
+          onChange={(e) => {
+            const list = (e.currentTarget as HTMLInputElement).files;
+            if (list?.length) onFolder([...list]);
+            (e.currentTarget as HTMLInputElement).value = '';
+          }}
+        />
+      </div>
+      {hint && <div class="field-hint">{hint}</div>}
+    </div>
+  );
+}
+
 export function PasswordStrength({ password }: { password: string }) {
   let score = 0;
   if (password.length >= 8) score++;

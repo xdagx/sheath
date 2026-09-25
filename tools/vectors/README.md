@@ -34,3 +34,24 @@ mkdir c1 && ./gen_legacy c1 'xdag2018' 256 <privhex> [<privhex>...]
 deterministic randomness. The five committed cases cover a 3-key wallet, a Chinese password with
 an ARM-style 1024-bit dnet key, an empty password, an emoji password (dfslib leaves it unencrypted)
 and a Cyrillic password. 4096-bit key generation takes about a minute per case.
+
+## 2018 C client storage folder — `tests/fixtures/legacy-storage/`
+
+```bash
+S=xdag/client
+gcc -O2 -c -DUSE_BASIC_CONFIG=1 -Ixdag/secp256k1 -Ixdag/secp256k1/include -Ixdag/secp256k1/src \
+    xdag/secp256k1/src/secp256k1.c -o secp.o
+gcc -O1 -w -I$S -I$S/.. -Ixdag/secp256k1/include tools/vectors/legacy/gen_storage.c \
+    $S/crypt.c $S/hash.c $S/algorithms/sha256.c $S/address.c $S/storage.c secp.o -lcrypto -lpthread -o gen_storage
+./gen_storage out <privhex of wallet.dat, in file order>...
+```
+
+`gen_storage` links the unmodified client sources, assembles blocks like `xdag_create_block()`
+(wallet address blocks of every key position, a transfer, a pool-style first block, a mined block,
+a foreign block and a testnet block), signs them with `xdag_sign()` and writes them with the real
+`xdag_storage_save()`, then damages three files. The expected owner of every block comes from a
+verbatim copy of the client's `valid_signature()`. The committed folder uses the keys of the first
+legacy case (the reviewer test wallet, password `xdag2018`); the same folder is shipped in
+`store/reviewer-test-files/` so the folder import can be tried by hand. OpenSSL signs with a random
+k, so regenerated folders differ: commit the output rather than regenerating it in CI.
+

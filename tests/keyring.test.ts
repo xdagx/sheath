@@ -159,6 +159,58 @@ describe('keyring', () => {
     expect(await kr.exportPrivateKey(legacy[1]!.id, PASSWORD)).toBe(v.privateKeys[1]);
   });
 
+  it('attaches old addresses found in the storage folder to the accounts of their owning keys', async () => {
+    const v = legacyVectors[0]!;
+    const preview = await kr.previewImport({
+      kind: 'legacy',
+      walletDat: { name: 'wallet.dat', data: v.walletDat },
+      dnetKeyDat: { name: 'dnet_key.dat', data: v.dnetKeyDat },
+      filePassword: v.password,
+    });
+    // the preview exposes the public keys the storage scan needs (default key first)
+    expect(preview.accounts.map((a) => a.publicKey)).toEqual([...v.privateKeys].reverse().map((h) => toHex(getPublicKey(fromHex(h)))));
+    expect(preview.accounts.every((a) => a.alreadyExists)).toBe(true);
+    const [def, mid] = preview.accounts;
+    await expect(
+      kr.commitImport({ token: preview.token, addresses: [], ownedBlocks: [{ block: 'Wjvq3/JkRUom0LtTE/uyAa4V7ipvqDyK', owner: addrOf('11'.repeat(32)) }] }),
+    ).rejects.toMatchObject({ code: 'invalid_block_address' });
+    await expect(kr.commitImport({ token: preview.token, addresses: [], ownedBlocks: [{ block: 'not-a-block', owner: mid!.address }] })).rejects.toMatchObject({
+      code: 'invalid_block_address',
+    });
+    await expect(kr.commitImport({ token: preview.token, addresses: [] })).rejects.toMatchObject({ code: 'nothing_to_import' });
+    // the wallet was imported before (previous test): the blocks are merged into those accounts
+    await kr.commitImport({
+      token: preview.token,
+      addresses: [],
+      ownedBlocks: [
+        { block: 'Wjvq3/JkRUom0LtTE/uyAa4V7ipvqDyK', owner: mid!.address },
+        { block: 'uotbpDiYMURy7SbX2VoJTpyIo9GvZGkr', owner: def!.address },
+        { block: 'oumX+GaqhVixMUBFIazAgtzfBqCXOg1U', owner: def!.address },
+      ],
+    });
+    const st = await kr.state();
+    const byAddr = (a: string) => st.accounts.find((x) => x.address === a)!;
+    expect(byAddr(def!.address).legacyBlocks).toEqual(['gKNRtSL1pUaTpzMuPMznKw49ILtP6qX3', 'uotbpDiYMURy7SbX2VoJTpyIo9GvZGkr', 'oumX+GaqhVixMUBFIazAgtzfBqCXOg1U']);
+    expect(byAddr(mid!.address).legacyBlocks).toEqual(['Wjvq3/JkRUom0LtTE/uyAa4V7ipvqDyK']);
+    expect(st.selectedAccountId).toBe(byAddr(mid!.address).id);
+    expect(st.accounts.filter((a) => a.source === 'legacy')).toHaveLength(3);
+  });
+
+  it('caps the old addresses per account', async () => {
+    const v = legacyVectors[0]!;
+    const preview = await kr.previewImport({
+      kind: 'legacy',
+      walletDat: { name: 'wallet.dat', data: v.walletDat },
+      dnetKeyDat: { name: 'dnet_key.dat', data: v.dnetKeyDat },
+      filePassword: v.password,
+    });
+    const many = Array.from({ length: 60 }, (_, i) => encodeLegacyAddress(sha256d(Uint8Array.of(i)).subarray(0, 24)));
+    await expect(
+      kr.commitImport({ token: preview.token, addresses: [], ownedBlocks: many.map((block) => ({ block, owner: preview.accounts[2]!.address })) }),
+    ).rejects.toMatchObject({ code: 'too_many_blocks' });
+    kr.cancelImport(preview.token);
+  });
+
   it('imports an xdagj wallet.data including its mnemonic', async () => {
     const w = xdagjVectors.walletFiles[0]!;
     const preview = await kr.previewImport({ kind: 'xdagj', file: { name: 'wallet.data', data: w.file }, filePassword: w.password });

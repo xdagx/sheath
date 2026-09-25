@@ -36,7 +36,7 @@ Community-built and open source. Not affiliated with or endorsed by the XDagger 
 WHAT YOU CAN DO
 • Create a wallet with a 12-word recovery phrase, or import an existing phrase (12–24 words)
 • Import a private key, or the encrypted wallet.data file of an xdagj node
-• Open the original 2018 wallet.dat + dnet_key.dat files and move balances held by old 32-character block addresses to your new address
+• Open the original 2018 wallet folder: your old 32-character addresses and their balances are found automatically, and can be moved to your new address
 • Send with a clear fee breakdown: see exactly what the recipient receives before you sign
 • Receive with a QR code, browse your history, keep an address book
 • Several accounts; mainnet, testnet or your own node; English and Chinese; dark and light themes
@@ -65,7 +65,7 @@ Privacy policy: <PRIVACY POLICY URL>
 主要功能
 • 创建钱包（12 个单词的助记词），或导入已有助记词（12–24 个单词）
 • 导入私钥，或导入 xdagj 节点的加密钱包文件 wallet.data
-• 直接打开 2018 年原版客户端的 wallet.dat + dnet_key.dat，并把旧的 32 位区块地址中的余额转到你的新地址
+• 直接打开 2018 年原版客户端的钱包文件夹，自动找到旧的 32 位地址和余额，并可转到你的新地址
 • 转账手续费一目了然：签名前就能看到对方实收金额
 • 二维码收款、交易记录、地址簿
 • 多账户；主网、测试网或自定义节点；中英文界面；深色 / 浅色主题
@@ -146,7 +146,7 @@ This is a self-custody XDAG wallet. Reviewers do not need real funds.
 3. Home: Receive shows the address and QR code; the activity list and address book are under Home and Settings.
 4. Import flows with test-only files (no real funds) from https://github.com/xdagx/xdagx/tree/main/store/reviewer-test-files :
    Click the account name at the top left of Home (opens "Accounts") > Import, then choose the tab:
-   - "2018 wallet": wallet.dat + dnet_key.dat, password: xdag2018
+   - "2018 wallet": "Choose folder" and select the whole reviewer-test-files folder (wallet.dat, dnet_key.dat and storage/), password: xdag2018. The old addresses are found automatically from storage/; they do not exist on the public networks, so they show "Not on this node". Chrome asks to confirm reading the folder; files are only read locally.
    - "xdagj file": xdagj/wallet.data, password: test-password-1
    In the toolbar popup these two tabs show "Open in full page to select files" (file pickers close popups); continue in that tab.
    A wrong password is rejected; the correct one shows the accounts contained in the file.
