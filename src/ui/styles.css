@@ -2088,6 +2088,11 @@ button.tx-row:hover {
     0 12px 30px rgba(31, 191, 143, 0.35);
 }
 
+.result-icon.unknown {
+  background: var(--warning);
+  box-shadow: 0 0 0 10px var(--warning-soft);
+}
+
 .result-icon.fail {
   background: var(--danger);
   box-shadow: 0 0 0 10px var(--danger-soft);

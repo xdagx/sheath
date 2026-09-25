@@ -1,8 +1,18 @@
 /** JSON-RPC client for xdagj nodes (io.xdag.rpc.api.XdagApi). */
 import { parseNodeAmount } from './amount';
 
+/**
+ * transport: no usable answer (network error, timeout, HTTP error, malformed body) — outcome unknown;
+ * rpc: the node answered with a JSON-RPC error; rejected: the node refused a transaction.
+ */
+export type RpcErrorKind = 'transport' | 'rpc' | 'rejected';
+
 export class RpcError extends Error {
-  constructor(message: string, readonly code?: number) {
+  constructor(
+    message: string,
+    readonly kind: RpcErrorKind = 'transport',
+    readonly code?: number,
+  ) {
     super(message);
     this.name = 'RpcError';
   }
@@ -76,7 +86,7 @@ export class XdagRpc {
     }
     if (body.error) {
       const err = body.error;
-      throw typeof err === 'string' ? new RpcError(err) : new RpcError(err.message ?? 'Node error', err.code);
+      throw typeof err === 'string' ? new RpcError(err, 'rpc') : new RpcError(err.message ?? 'Node error', 'rpc', err.code);
     }
     return body.result as T;
   }
@@ -88,7 +98,7 @@ export class XdagRpc {
 
   async getNonce(address: string): Promise<bigint> {
     const r = await this.call<string>('xdag_getTransactionNonce', [address]);
-    if (typeof r !== 'string' || !/^\d+$/.test(r)) throw new RpcError('Invalid nonce response');
+    if (typeof r !== 'string' || !/^\d{1,19}$/.test(r)) throw new RpcError('Invalid nonce response', 'rpc');
     return BigInt(r);
   }
 
@@ -110,7 +120,7 @@ export class XdagRpc {
       return await this.call<BlockResponse | null>('xdag_getBlockByHash', [hashOrAddress, String(page), String(pageSize)]);
     } catch (e) {
       // older nodes only implement the (hash, page) overload
-      if (e instanceof RpcError && /param/i.test(e.message)) return this.call('xdag_getBlockByHash', [hashOrAddress, String(page)]);
+      if (e instanceof RpcError && e.kind === 'rpc' && /param/i.test(e.message)) return this.call('xdag_getBlockByHash', [hashOrAddress, String(page)]);
       throw e;
     }
   }
@@ -119,6 +129,7 @@ export class XdagRpc {
   async sendRawTransaction(rawHex: string): Promise<string> {
     const r = await this.call<string>('xdag_sendRawTransaction', [rawHex]);
     if (typeof r === 'string' && /^[A-Za-z0-9+/]{32}$/.test(r)) return r;
-    throw new RpcError(typeof r === 'string' && r ? r : 'Transaction rejected by node');
+    if (typeof r === 'string' && r) throw new RpcError(r.slice(0, 300), 'rejected');
+    throw new RpcError('Unexpected response from node'); // outcome unknown
   }
 }

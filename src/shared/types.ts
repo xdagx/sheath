@@ -68,6 +68,8 @@ export interface PendingTx {
   time: number;
   networkId: string;
   legacyFrom?: string;
+  /** broadcast outcome unknown (timeout / unexpected answer) */
+  uncertain?: boolean;
 }
 
 export interface WalletState {

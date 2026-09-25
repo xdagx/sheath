@@ -51,7 +51,7 @@ export function validateNodeUrl(url: string): string | null {
     return 'invalid';
   }
   if (u.protocol === 'https:') return null;
-  if (u.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(u.hostname)) return null;
+  if (u.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(u.hostname)) return null;
   return u.protocol === 'http:' ? 'insecure' : 'invalid';
 }
 

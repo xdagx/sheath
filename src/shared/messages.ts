@@ -22,7 +22,8 @@ export interface RequestMap {
   lock: [{}, WalletState];
   verifyPassword: [{ password: string }, { ok: true }];
   changePassword: [{ oldPassword: string; newPassword: string }, { ok: true }];
-  resetWallet: [{}, WalletState];
+  /** password required while unlocked; while locked this is the forgot-password path */
+  resetWallet: [{ password?: string }, WalletState];
 
   /** Stage an import; returns a preview with addresses. `password` is the vault password during onboarding. */
   previewImport: [

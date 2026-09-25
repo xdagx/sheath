@@ -10,7 +10,7 @@ import { fmtAmount, middle } from '../format';
 import { Icon } from '../icons';
 import { t } from '../i18n';
 import { navigate, route } from '../router';
-import { accounts, balanceOf, contacts, describeError, loadContacts, network, refreshBalance, rpc, selectedAccount, settings } from '../state';
+import { accounts, balanceOf, contacts, errorInfo, loadContacts, network, refreshBalance, rpc, selectedAccount, settings } from '../state';
 
 function RecipientPicker({ open, onClose, onPick }: { open: boolean; onClose: () => void; onPick: (a: string) => void }) {
   const me = selectedAccount.value;
@@ -49,19 +49,24 @@ function RecipientPicker({ open, onClose, onPick }: { open: boolean; onClose: ()
   );
 }
 
-export function SendResultView({ result, error, onDone, onRetry }: { result: SendResult | null; error: string | null; onDone: () => void; onRetry?: () => void }) {
-  const link = result ? explorerLink(network.value, result.blockAddress) : null;
+type SendError = { code: string; text: string; detail: string };
+
+export function SendResultView({ result, error, onDone, onRetry }: { result: SendResult | null; error: SendError | null; onDone: () => void; onRetry?: () => void }) {
+  // the node did not give a clear answer: the transfer may still go through, so never offer a retry
+  const unknown = error?.code === 'broadcast_unknown';
+  const txAddress = result?.blockAddress ?? (unknown && /^[A-Za-z0-9+/]{32}$/.test(error!.detail) ? error!.detail : undefined);
+  const link = txAddress ? explorerLink(network.value, txAddress) : null;
   return (
     <Page
       back={false}
       footer={
         <div class="stack-sm">
-          {result && link && (
+          {link && (
             <Button block variant="secondary" icon="external" onClick={() => openExternal(link)}>
               {t('viewInExplorer')}
             </Button>
           )}
-          {error && onRetry && (
+          {error && !unknown && onRetry && (
             <Button block variant="secondary" onClick={onRetry}>
               {t('back')}
             </Button>
@@ -73,10 +78,10 @@ export function SendResultView({ result, error, onDone, onRetry }: { result: Sen
       }
     >
       <div class="result">
-        <div class={`result-icon ${result ? 'ok' : 'fail'}`}>
-          <Icon name={result ? 'check' : 'close'} size={34} />
+        <div class={`result-icon ${result ? 'ok' : unknown ? 'unknown' : 'fail'}`}>
+          <Icon name={result ? 'check' : unknown ? 'clock' : 'close'} size={34} />
         </div>
-        <h2>{result ? t('sentSuccess') : t('sendFailed')}</h2>
+        <h2>{result ? t('sentSuccess') : unknown ? t('broadcastUnknownTitle') : t('sendFailed')}</h2>
         {result ? (
           <>
             <p class="muted">{t('sentDesc')}</p>
@@ -88,8 +93,18 @@ export function SendResultView({ result, error, onDone, onRetry }: { result: Sen
               <CopyButton text={result.blockAddress} />
             </div>
           </>
+        ) : unknown ? (
+          <>
+            <Notice kind="warning">{t('broadcastUnknownDesc')}</Notice>
+            {txAddress && (
+              <div class="result-hash">
+                <span class="mono">{middle(txAddress, 10, 10)}</span>
+                <CopyButton text={txAddress} />
+              </div>
+            )}
+          </>
         ) : (
-          <Notice kind="danger">{error}</Notice>
+          <Notice kind="danger">{error?.text}</Notice>
         )}
       </div>
     </Page>
@@ -116,7 +131,7 @@ export function SendPage() {
   const [review, setReview] = useState<Review | null>(null);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<SendResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<SendError | null>(null);
   const [touched, setTouched] = useState(false);
 
   useEffect(() => {
@@ -168,7 +183,7 @@ export function SendPage() {
       setResult(res);
       setError(null);
     } catch (e) {
-      setError(describeError(e));
+      setError(errorInfo(e));
       setResult(null);
     } finally {
       setSending(false);
@@ -357,7 +372,7 @@ export function LegacySendPage() {
   const [review, setReview] = useState<Review | null>(null);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<SendResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<SendError | null>(null);
 
   useEffect(() => {
     if (!block) return;
@@ -438,7 +453,7 @@ export function LegacySendPage() {
               await call('sendLegacy', { accountId: acct.id, fromBlock: block, to: review.to, amount: review.amount.toString(), remark: review.remark }),
             );
           } catch (e) {
-            setError(describeError(e));
+            setError(errorInfo(e));
           } finally {
             setSending(false);
             setReview(null);

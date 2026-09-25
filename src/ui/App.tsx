@@ -3,7 +3,7 @@ import type { ComponentType } from 'preact';
 import { call } from './api';
 import { Toasts } from './components';
 import { navDirection, navigate, route } from './router';
-import { applyTheme, loadCachedBalances, loadContacts, loadPending, refreshState, settings, wallet } from './state';
+import { applyTheme, balances, loadCachedBalances, loadContacts, loadPending, refreshState, settings, wallet } from './state';
 import { BackupExisting, CreatePhrase, SetPassword, Welcome } from './pages/Onboarding';
 import { ImportPage, ImportPreviewPage } from './pages/Import';
 import { Unlock } from './pages/Unlock';
@@ -54,7 +54,9 @@ export function App() {
     const ping = setInterval(() => void call('ping').catch(() => undefined), 20_000);
     const onStorage = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
       if ((area === 'session' && 'vaultKey' in changes) || (area === 'local' && ('vault' in changes || 'settings' in changes))) {
-        void refreshState();
+        void refreshState().then((st) => {
+          if (!st.unlocked) balances.value = {};
+        });
       }
     };
     chrome.storage.onChanged.addListener(onStorage);

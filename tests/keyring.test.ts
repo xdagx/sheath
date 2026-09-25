@@ -4,7 +4,7 @@
 import legacyVectors from './fixtures/legacy-vectors.json';
 import xdagjVectors from './fixtures/xdagj-vectors.json';
 import { blockAddressOfRaw, decodeAddress, encodeAddress, encodeLegacyAddress } from '@/core/address';
-import { fromBase64, fromHex, readU64le, toHex } from '@/core/bytes';
+import { fromBase64, fromHex, readU64le, toBase64, toHex } from '@/core/bytes';
 import { sha256d } from '@/core/hash';
 import { getPublicKey, verifyDigest } from '@/core/keys';
 import { decryptXdagjWallet } from '@/core/xdagj-wallet';
@@ -43,6 +43,8 @@ const node = {
   nonces: new Map<string, bigint>(),
   sent: [] as Sent[],
   rejectUnlessOwner: null as string | null, // compressed pubkey hex that owns legacy blocks
+  sendMode: 'ok' as 'ok' | 'http500' | 'wrongAddress',
+  netTypeError: false,
 };
 
 function parseBlock(raw: Uint8Array) {
@@ -69,6 +71,7 @@ globalThis.fetch = (async (_url: string, init: RequestInit) => {
   const reply = (result: unknown) => new Response(JSON.stringify({ jsonrpc: '2.0', id: req.id, result }));
   switch (req.method) {
     case 'xdag_netType':
+      if (node.netTypeError) return new Response(JSON.stringify({ jsonrpc: '2.0', id: req.id, error: { code: -32601, message: 'Method not found' } }));
       return reply(node.netType);
     case 'xdag_getBalance': {
       const b = node.balances.get(req.params[0]) ?? 0n;
@@ -77,6 +80,8 @@ globalThis.fetch = (async (_url: string, init: RequestInit) => {
     case 'xdag_getTransactionNonce':
       return reply(String(node.nonces.get(req.params[0]) ?? 1n));
     case 'xdag_sendRawTransaction': {
+      if (node.sendMode === 'http500') return new Response('oops', { status: 502 });
+      if (node.sendMode === 'wrongAddress') return reply('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
       const raw = fromHex(req.params[0]);
       const blk = parseBlock(raw);
       if (!blk.valid) return reply('INVALID_BLOCK signature');
@@ -227,6 +232,103 @@ describe('keyring', () => {
     const addrs = res.privateKeys.map((k) => addrOf(toHex(k))).sort();
     expect(addrs).toEqual(st.accounts.map((a) => a.address).sort());
   }, 120_000);
+
+  it('never reports an ambiguous broadcast as a failure', async () => {
+    const st = await kr.state();
+    const from = st.accounts[0]!;
+    const to = st.accounts[1]!.address;
+    for (const mode of ['http500', 'wrongAddress'] as const) {
+      node.sendMode = mode;
+      try {
+        await expect(kr.send({ accountId: from.id, to, amount: parseXdag('2').toString(), fee: '0', remark: '' })).rejects.toMatchObject({
+          code: 'broadcast_unknown',
+        });
+      } finally {
+        node.sendMode = 'ok';
+      }
+      const pending = ((await local.get('pending')) as any).pending;
+      expect(pending[0].uncertain).toBe(true);
+      expect(pending[0].blockAddress).toHaveLength(32);
+    }
+  });
+
+  it('refuses to sign when the node network cannot be confirmed', async () => {
+    const st = await kr.state();
+    node.netTypeError = true;
+    try {
+      await expect(
+        kr.send({ accountId: st.accounts[0]!.id, to: st.accounts[1]!.address, amount: parseXdag('1').toString(), fee: '0', remark: '' }),
+      ).rejects.toMatchObject({ code: 'network_unverified' });
+    } finally {
+      node.netTypeError = false;
+    }
+  });
+
+  it('rejects malformed or out-of-range amounts in the background', async () => {
+    const st = await kr.state();
+    const base = { accountId: st.accounts[0]!.id, to: st.accounts[1]!.address, fee: '0', remark: '' };
+    for (const amount of ['-5', '1e9', '12.5', '99999999999999999999999']) {
+      await expect(kr.send({ ...base, amount })).rejects.toMatchObject({ code: 'invalid_amount' });
+    }
+  });
+
+  it('bounds the account index read from a crafted xdagj wallet.data', async () => {
+    const { encryptXdagjWallet } = await import('@/core/xdagj-wallet');
+    const file = encryptXdagjWallet(
+      { privateKeys: [fromHex(xdagjVectors.walletFiles[0]!.accounts[0]!.privateKey)], mnemonic: xdagjVectors.walletFiles[0]!.mnemonic, nextAccountIndex: 0x7fffffff },
+      'crafted',
+    );
+    const started = Date.now();
+    const preview = await kr.previewImport({ kind: 'xdagj', file: { name: 'wallet.data', data: toBase64(file) }, filePassword: 'crafted' });
+    expect(Date.now() - started).toBeLessThan(20_000);
+    kr.cancelImport(preview.token);
+  }, 60_000);
+
+  it('keeps the vault openable when writes race a password change', async () => {
+    const st = await kr.state();
+    const id = st.accounts[0]!.id;
+    await Promise.all([
+      kr.changePassword(PASSWORD, 'raced password 1'),
+      kr.renameAccount(id, 'renamed during change'),
+      kr.selectAccount(st.accounts[1]!.id),
+      kr.renameAccount(id, 'renamed again'),
+    ]);
+    await kr.lock();
+    const fresh = new Keyring();
+    const after = await fresh.unlock('raced password 1');
+    expect(after.accounts.find((a) => a.id === id)!.name).toBe('renamed again');
+    await kr.unlock('raced password 1');
+    await kr.changePassword('raced password 1', PASSWORD);
+  });
+
+  it('does not come back unlocked when lock() races a restore', async () => {
+    const restarted = new Keyring(); // service worker restart: memory empty, session key present
+    const restoring = restarted.state();
+    await restarted.lock();
+    await restoring;
+    expect((await restarted.state()).unlocked).toBe(false);
+    kr = new Keyring();
+    await kr.unlock(PASSWORD);
+  });
+
+  it('serialises password guesses so the rate limit holds', async () => {
+    await kr.lock();
+    const results = await Promise.allSettled(Array.from({ length: 8 }, () => kr.unlock('bad guess')));
+    const codes = results.map((r) => (r.status === 'rejected' ? (r.reason as { code: string }).code : 'ok'));
+    expect(codes.filter((c) => c === 'wrong_password')).toHaveLength(5);
+    expect(codes.filter((c) => c === 'rate_limited')).toHaveLength(3);
+    const failures = ((await local.get('unlockFailures')) as any).unlockFailures;
+    expect(failures.count).toBe(5);
+    await local.remove('unlockFailures');
+    kr = new Keyring(); // fresh memory counter
+    await kr.unlock(PASSWORD);
+  }, 120_000);
+
+  it('requires the password to reset an unlocked wallet', async () => {
+    await expect(kr.reset()).rejects.toMatchObject({ code: 'wrong_password' });
+    await expect(kr.reset('nope nope nope')).rejects.toMatchObject({ code: 'wrong_password' });
+    expect((await kr.state()).initialized).toBe(true);
+  });
 
   it('changes the password', async () => {
     await kr.changePassword(PASSWORD, 'another password');

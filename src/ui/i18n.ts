@@ -182,6 +182,9 @@ const en = {
   sentDesc: 'It usually confirms within a few minutes.',
   viewInExplorer: 'View in explorer',
   sendFailed: 'Transaction failed',
+  broadcastUnknownTitle: 'Status unknown',
+  broadcastUnknownDesc: 'The node did not confirm the broadcast. The transaction may still go through — check your activity or the explorer before sending again.',
+  statusUnknown: 'Unknown — check before resending',
   invalidAddress: 'Invalid XDAG address',
   legacyDestination: '32-character block addresses cannot receive funds. Use a new-format address.',
   selfSend: 'This is your current account.',
@@ -291,6 +294,11 @@ const en = {
   err_key_mismatch: 'Stored key does not match the account',
   err_file_password_too_long: 'File password must be at most 72 bytes',
   err_invalid_name: 'Enter a name',
+  err_network_unverified: 'Could not confirm which network the node is on: {v}',
+  err_broadcast_unknown: 'The broadcast result is unknown ({v})',
+  err_invalid_amount: 'Invalid amount',
+  err_invalid_nonce: 'The node returned an invalid nonce',
+  err_already_initialized: 'A wallet already exists in this browser',
   err_internal: 'Unexpected error: {v}',
 };
 
@@ -477,6 +485,9 @@ const zh: Record<MessageKey, string> = {
   sentDesc: '通常几分钟内即可确认。',
   viewInExplorer: '在浏览器中查看',
   sendFailed: '转账失败',
+  broadcastUnknownTitle: '状态未知',
+  broadcastUnknownDesc: '节点没有确认本次广播，交易仍可能成功。再次转账前，请先在交易记录或区块浏览器中确认。',
+  statusUnknown: '未知——重发前请先确认',
   invalidAddress: '无效的 XDAG 地址',
   legacyDestination: '32 位区块地址无法接收转账，请使用新格式地址。',
   selfSend: '这是当前账户自己的地址。',
@@ -586,6 +597,11 @@ const zh: Record<MessageKey, string> = {
   err_key_mismatch: '存储的密钥与账户不匹配',
   err_file_password_too_long: '文件密码不能超过 72 字节',
   err_invalid_name: '请输入名称',
+  err_network_unverified: '无法确认节点所在网络：{v}',
+  err_broadcast_unknown: '广播结果未知（{v}）',
+  err_invalid_amount: '金额无效',
+  err_invalid_nonce: '节点返回的 nonce 无效',
+  err_already_initialized: '本浏览器中已存在钱包',
   err_internal: '发生意外错误：{v}',
 };
 

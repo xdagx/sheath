@@ -352,7 +352,15 @@ function TxDetail({ item, onClose, account }: { item: ActivityItem | null; onClo
           </div>
           <dl class="kv">
             <dt>{t('status')}</dt>
-            <dd>{item.pending ? t('pending') : block === undefined ? <Spinner size={14} /> : (block?.state ?? t('notFoundYet'))}</dd>
+            <dd>
+              {item.pending && (!block || !block.state)
+                ? item.pending.uncertain
+                  ? t('statusUnknown')
+                  : t('pending')
+                : block === undefined
+                  ? <Spinner size={14} />
+                  : (block?.state ?? t('notFoundYet'))}
+            </dd>
             <dt>{t('time')}</dt>
             <dd>{fmtDateTime(item.time)}</dd>
             {inputs.map((r) => (

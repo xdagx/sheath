@@ -79,5 +79,7 @@ export function nanoToCheato(nano: bigint): bigint {
   input -= amount;
   input = input * 2 ** 32;
   const tmp = Math.ceil(input);
-  return (res + BigInt(tmp)) & 0xffffffffffffffffn;
+  const out = res + BigInt(tmp);
+  if (out > 0xffffffffffffffffn) throw new RangeError('amount too large');
+  return out;
 }

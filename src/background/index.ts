@@ -80,8 +80,8 @@ const handlers: Handlers = {
     await keyring.changePassword(oldPassword, newPassword);
     return { ok: true };
   },
-  resetWallet: async () => {
-    await keyring.reset();
+  resetWallet: async ({ password }) => {
+    await keyring.reset(password);
     return keyring.state();
   },
   previewImport: (p) => keyring.previewImport(p),
@@ -124,6 +124,7 @@ const handlers: Handlers = {
   sendLegacy: (p) => keyring.sendLegacy(p),
   getSettings: () => loadSettings(),
   updateSettings: async ({ patch }) => {
+    await keyring.requireUnlockedIfInitialized();
     const current = await loadSettings();
     const next = { ...current, ...sanitizeSettingsPatch(patch, current) };
     await setLocal('settings', next);
@@ -131,6 +132,7 @@ const handlers: Handlers = {
     return next;
   },
   upsertNetwork: async ({ network }) => {
+    await keyring.requireUnlockedIfInitialized();
     const current = await loadSettings();
     const err = validateNodeUrl(network.rpcUrl);
     if (err) throw new WalletError(`node_url_${err}`);
@@ -151,6 +153,7 @@ const handlers: Handlers = {
     return next;
   },
   removeNetwork: async ({ id }) => {
+    await keyring.requireUnlockedIfInitialized();
     const current = await loadSettings();
     const customNetworks = current.customNetworks.filter((n) => n.id !== id);
     const next = { ...current, customNetworks, networkId: current.networkId === id ? 'mainnet' : current.networkId };
@@ -159,6 +162,7 @@ const handlers: Handlers = {
   },
   getContacts: async () => (await getLocal('contacts')) ?? [],
   saveContact: async ({ contact }) => {
+    await keyring.requireUnlockedIfInitialized();
     if (!isValidAddress(contact.address)) throw new WalletError('invalid_address');
     const name = contact.name.trim().slice(0, 40);
     if (!name) throw new WalletError('invalid_name');
@@ -170,12 +174,14 @@ const handlers: Handlers = {
     return next;
   },
   deleteContact: async ({ id }) => {
+    await keyring.requireUnlockedIfInitialized();
     const next = ((await getLocal('contacts')) ?? []).filter((c) => c.id !== id);
     await setLocal('contacts', next);
     return next;
   },
   getPending: async () => (await getLocal('pending')) ?? [],
   dropPending: async ({ blockAddresses }) => {
+    await keyring.requireUnlockedIfInitialized();
     const drop = new Set(blockAddresses);
     const next = ((await getLocal('pending')) ?? []).filter((p) => !drop.has(p.blockAddress));
     await setLocal('pending', next);
@@ -189,7 +195,7 @@ const PASSIVE = new Set<RequestType>(['ping', 'getState', 'getSettings', 'getPen
 chrome.runtime.onMessage.addListener((message: Envelope, sender, sendResponse: (r: Reply<unknown>) => void) => {
   // Only our own extension pages may talk to the keyring (no content scripts exist).
   if (sender.id !== chrome.runtime.id || !sender.url?.startsWith(chrome.runtime.getURL(''))) return false;
-  if (!message || message.target !== 'xdag-wallet' || !(message.type in handlers)) return false;
+  if (!message || message.target !== 'xdag-wallet' || typeof message.type !== 'string' || !Object.hasOwn(handlers, message.type)) return false;
   const handler = handlers[message.type] as Handler<RequestType>;
   (async () => {
     try {

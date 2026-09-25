@@ -21,11 +21,9 @@ export function applyState(st: WalletState): void {
   batch(() => {
     wallet.value = st;
     languageSetting.value = st.settings.language;
-    if (prevNetwork !== st.settings.networkId) {
-      balances.value = readCache();
-      nodeError.value = null;
-    }
+    if (prevNetwork !== st.settings.networkId) nodeError.value = null;
   });
+  if (prevNetwork !== st.settings.networkId) loadCachedBalances();
   applyTheme(st.settings.theme);
 }
 
@@ -62,6 +60,7 @@ export function applyCachedTheme(): void {
 }
 
 // ---------------------------------------------------------------- balances (cached)
+// Kept in chrome.storage.session: RAM only, cleared on lock and when the browser closes.
 
 interface CachedBalance {
   value: string;
@@ -72,19 +71,19 @@ function cacheKey(): string {
   return `balances:${network.value.id}`;
 }
 
-function readCache(): Record<string, CachedBalance> {
-  try {
-    return JSON.parse(localStorage.getItem(cacheKey()) ?? '{}');
-  } catch {
-    return {};
-  }
-}
-
 export const balances = signal<Record<string, CachedBalance>>({});
 export const nodeError = signal<string | null>(null);
 
 export function loadCachedBalances(): void {
-  balances.value = readCache();
+  const key = cacheKey();
+  chrome.storage.session.get(key).then(
+    (r) => {
+      if (key !== cacheKey()) return;
+      const cached = (r[key] ?? {}) as Record<string, CachedBalance>;
+      balances.value = { ...cached, ...balances.value };
+    },
+    () => undefined,
+  );
 }
 
 export function balanceOf(address: string): bigint | null {
@@ -98,16 +97,22 @@ export async function refreshBalance(address: string): Promise<bigint | null> {
     const next = { ...balances.value, [address]: { value: value.toString(), at: Date.now() } };
     balances.value = next;
     nodeError.value = null;
-    try {
-      localStorage.setItem(cacheKey(), JSON.stringify(next));
-    } catch {
-      /* storage full or unavailable: cache is optional */
-    }
+    if (wallet.value?.unlocked) void chrome.storage.session.set({ [cacheKey()]: next }).catch(() => undefined);
     return value;
   } catch (e) {
     // a JSON-RPC error means the node answered (e.g. unknown block address): not a connectivity issue
-    if (!(e instanceof RpcError && e.code !== undefined)) nodeError.value = (e as Error).message;
+    if (!(e instanceof RpcError) || e.kind === 'transport') nodeError.value = (e as Error).message;
     return null;
+  }
+}
+
+/** Forgets per-device UI caches (theme, balances) after the wallet was reset. */
+export function clearLocalCaches(): void {
+  balances.value = {};
+  try {
+    localStorage.clear();
+  } catch {
+    /* optional */
   }
 }
 
@@ -143,6 +148,12 @@ export function toast(text: string, kind: Toast['kind'] = 'info'): void {
 
 export function toastError(e: unknown): void {
   toast(describeError(e), 'error');
+}
+
+export function errorInfo(e: unknown): { code: string; text: string; detail: string } {
+  return e instanceof WalletCallError
+    ? { code: e.code, text: describeError(e), detail: e.detail }
+    : { code: 'internal', text: describeError(e), detail: '' };
 }
 
 export function describeError(e: unknown): string {

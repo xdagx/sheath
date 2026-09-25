@@ -11,7 +11,7 @@ import { middle } from '../format';
 import { Icon } from '../icons';
 import { errorText, t } from '../i18n';
 import { navigate } from '../router';
-import { applySettings, applyState, contacts, describeError, loadContacts, network, settings, toast, toastError, wallet } from '../state';
+import { applySettings, applyState, clearLocalCaches, contacts, describeError, loadContacts, network, settings, toast, toastError, wallet } from '../state';
 import { PasswordSheet } from './Accounts';
 
 async function patch(p: Partial<Settings>) {
@@ -164,8 +164,8 @@ export function SettingsPage() {
         confirmLabel={t('resetButton')}
         onClose={() => setSheet(null)}
         onSubmit={async (pw) => {
-          await call('verifyPassword', { password: pw });
-          applyState(await call('resetWallet'));
+          applyState(await call('resetWallet', { password: pw }));
+          clearLocalCaches();
           navigate('/welcome', undefined, true);
         }}
       >
@@ -278,8 +278,12 @@ function ExportSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
 // ---------------------------------------------------------------- networks
 
 /** Must run inside a click handler: resolves immediately when access was already granted. */
-function ensurePermission(url: string): Promise<boolean> {
-  return chrome.permissions.request({ origins: [originPattern(url)] });
+async function ensurePermission(url: string): Promise<boolean> {
+  try {
+    return await chrome.permissions.request({ origins: [originPattern(url)] });
+  } catch {
+    return false;
+  }
 }
 
 export function NetworksPage() {
@@ -287,7 +291,7 @@ export function NetworksPage() {
   const [editing, setEditing] = useState<NetworkConfig | null>(null);
   const select = async (n: NetworkConfig) => {
     // request host access synchronously within the click for custom nodes
-    const granted = n.builtin ? true : await ensurePermission(n.rpcUrl);
+    const granted = n.builtin || (await ensurePermission(n.rpcUrl));
     if (!granted) return toast(t('permissionDenied'), 'error');
     await patch({ networkId: n.id });
   };
@@ -342,12 +346,7 @@ function NetworkEditor({ value, onClose }: { value: NetworkConfig | null; onClos
 
   const test = async () => {
     setStatus(null);
-    let granted = false;
-    try {
-      granted = await ensurePermission(rpcUrl);
-    } catch {
-      granted = false;
-    }
+    const granted = await ensurePermission(rpcUrl);
     if (!granted) return setStatus({ ok: false, text: t('permissionDenied') });
     setBusy(true);
     try {

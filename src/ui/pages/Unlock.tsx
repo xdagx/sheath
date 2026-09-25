@@ -4,7 +4,7 @@ import { Button, Notice, PasswordField, Sheet, TextField } from '../components';
 import { Logo } from '../icons';
 import { t } from '../i18n';
 import { navigate } from '../router';
-import { applyState, describeError } from '../state';
+import { applyState, clearLocalCaches, describeError } from '../state';
 
 export function Unlock() {
   const [pw, setPw] = useState('');
@@ -51,7 +51,8 @@ export function Unlock() {
             variant="danger"
             disabled={confirmText.trim().toUpperCase() !== 'RESET'}
             onClick={async () => {
-              applyState(await call('resetWallet'));
+              applyState(await call('resetWallet', {}));
+              clearLocalCaches();
               setReset(false);
               navigate('/welcome', undefined, true);
             }}
