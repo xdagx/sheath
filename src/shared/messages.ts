@@ -46,6 +46,8 @@ export interface RequestMap {
   cancelImport: [{ token: string }, { ok: true }];
 
   addHdAccount: [{ name?: string }, WalletState];
+  /** Adds a new recovery phrase and its first account to a wallet that has none yet (e.g. built from imported keys). */
+  createHdWallet: [{ mnemonic: string; backedUp: boolean }, WalletState];
   renameAccount: [{ id: string; name: string }, WalletState];
   removeAccount: [{ id: string; password: string }, WalletState];
   selectAccount: [{ id: string }, WalletState];

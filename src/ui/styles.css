@@ -1495,6 +1495,34 @@ html[data-mode='tab'] .sheet-root {
   color: var(--text-2);
 }
 
+/* full address with copy / explorer buttons (import preview) */
+.addr-line {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.addr-full {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  line-height: 1.35;
+  word-break: break-all;
+  user-select: all;
+}
+
+.select-main .row-sub {
+  white-space: normal;
+}
+
+.addr-line .icon-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  flex: none;
+}
+
 /* old client folder: picker, divider, discovered block addresses */
 .filedrop.folderpick {
   min-height: 64px;

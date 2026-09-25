@@ -4,7 +4,7 @@ import { call } from './api';
 import { Toasts } from './components';
 import { navDirection, navigate, route } from './router';
 import { applyTheme, balances, loadCachedBalances, loadContacts, loadPending, refreshState, settings, wallet } from './state';
-import { BackupExisting, CreatePhrase, SetPassword, Welcome } from './pages/Onboarding';
+import { BackupExisting, CreatePhrase, CreateWalletPhrase, SetPassword, Welcome } from './pages/Onboarding';
 import { ImportPage, ImportPreviewPage } from './pages/Import';
 import { Unlock } from './pages/Unlock';
 import { Home } from './pages/Home';
@@ -31,6 +31,7 @@ const PRIVATE: Record<string, ComponentType> = {
   '/settings/networks': NetworksPage,
   '/settings/contacts': ContactsPage,
   '/backup': BackupExisting,
+  '/create-wallet': CreateWalletPhrase,
   '/import': ImportPage,
   '/import/preview': ImportPreviewPage,
 };

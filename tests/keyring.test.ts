@@ -452,6 +452,39 @@ describe('old address import edge cases', () => {
   });
 });
 
+describe('wallet without a recovery phrase', () => {
+  it('can always create accounts: a new phrase is added first', async () => {
+    await local.clear();
+    await session.clear();
+    const kr = new Keyring();
+    const v = legacyVectors[0]!;
+    const preview = await kr.previewImport({ kind: 'legacy', walletDat: { name: 'wallet.dat', data: v.walletDat }, dnetKeyDat: { name: 'dnet_key.dat', data: v.dnetKeyDat }, filePassword: v.password });
+    await kr.commitImport({ token: preview.token, addresses: preview.accounts.map((a) => a.address), newVaultPassword: PASSWORD });
+    let st = await kr.state();
+    expect(st.hasMnemonic).toBe(false);
+    await expect(kr.addHdAccount()).rejects.toMatchObject({ code: 'no_mnemonic' });
+
+    await expect(kr.createHdWallet('abandon abandon', false)).rejects.toMatchObject({ code: 'invalid_mnemonic' });
+    const mnemonic = kr.generateMnemonic(12);
+    await kr.createHdWallet(mnemonic, false);
+    st = await kr.state();
+    expect(st.hasMnemonic).toBe(true);
+    expect(st.needsBackup).toBe(true);
+    expect(st.accounts).toHaveLength(4);
+    const created = st.accounts.find((a) => a.source === 'created')!;
+    expect(created.hdIndex).toBe(0);
+    expect(st.selectedAccountId).toBe(created.id);
+    expect(await kr.exportMnemonic(PASSWORD)).toBe(mnemonic);
+    await expect(kr.createHdWallet(mnemonic, true)).rejects.toMatchObject({ code: 'mnemonic_exists' });
+
+    await kr.addHdAccount();
+    st = await kr.state();
+    expect(st.accounts.filter((a) => a.source === 'created').map((a) => a.hdIndex)).toEqual([0, 1]);
+    await kr.markBackedUp(PASSWORD);
+    expect((await kr.state()).needsBackup).toBe(false);
+  });
+});
+
 import { privateKeyToAddress } from '@/core/keys';
 function addrOf(privHex: string): string {
   return privateKeyToAddress(fromHex(privHex));

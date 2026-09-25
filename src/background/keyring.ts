@@ -513,6 +513,43 @@ export class Keyring {
     return vault.keyrings.find((k): k is HdKeyring => k.type === 'hd');
   }
 
+  /**
+   * Adds a new recovery phrase and its first account to an existing wallet. A wallet built only
+   * from imported keys (2018 wallet, private key, xdagj file without phrase) has no phrase to
+   * derive accounts from; this gives it one, so a new account can always be created.
+   */
+  createHdWallet(mnemonic: string, backedUp: boolean): Promise<void> {
+    return this.vaultMutex.run(async () => {
+      const vault = await this.requireUnlocked();
+      const norm = typeof mnemonic === 'string' ? normalizeMnemonic(mnemonic) : '';
+      if (checkMnemonic(norm).status !== 'ok') throw new WalletError('invalid_mnemonic');
+      if (vault.keyrings.some((k) => k.type === 'hd' && k.mnemonic === norm)) throw new WalletError('mnemonic_exists');
+      const settings = await loadSettings();
+      const seed = mnemonicToSeed(norm);
+      const priv = deriveHdKey(seed, 0);
+      wipe(seed);
+      const address = publicKeyToAddress(getPublicKey(priv));
+      wipe(priv);
+      if (vault.accounts.some((a) => a.address === address)) throw new WalletError('mnemonic_exists');
+      const keyring: KeyringEntry = { id: newId(), type: 'hd', mnemonic: norm, nextIndex: 1, createdAt: Date.now(), backedUp };
+      const account: Account = {
+        id: newId(),
+        name: defaultName('created', vault.accounts.filter((a) => a.source === 'created').length + 1, settings.language),
+        address,
+        source: 'created',
+        keyringId: keyring.id,
+        hdIndex: 0,
+        groupId: keyring.id,
+        legacyBlocks: [],
+        createdAt: Date.now(),
+      };
+      vault.keyrings.push(keyring);
+      vault.accounts.push(account);
+      vault.selectedAccountId = account.id;
+      await this.persist();
+    });
+  }
+
   addHdAccount(name?: string): Promise<void> {
     return this.vaultMutex.run(async () => {
       const vault = await this.requireUnlocked();

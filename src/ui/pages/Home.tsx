@@ -9,6 +9,7 @@ import { dayLabel, fmtAmount, fmtDateTime, fmtTime, middle } from '../format';
 import { Icon, type IconName } from '../icons';
 import { networkLabel, t } from '../i18n';
 import { navigate } from '../router';
+import { createAccount } from './Accounts';
 import {
   accounts,
   applySettings,
@@ -455,26 +456,24 @@ export function AccountSwitcher({ open, onClose }: { open: boolean; onClose: () 
         ))}
       </div>
       <div class="sheet-actions">
-        {wallet.value?.hasMnemonic && (
-          <Button
-            variant="secondary"
-            icon="plus"
-            loading={busy}
-            onClick={async () => {
-              setBusy(true);
-              try {
-                applyState(await call('addHdAccount', {}));
-                onClose();
-              } catch (e) {
-                toastError(e);
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            {t('addAccount')}
-          </Button>
-        )}
+        <Button
+          variant="secondary"
+          icon="plus"
+          loading={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              await createAccount();
+              onClose();
+            } catch (e) {
+              toastError(e);
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          {t('addAccount')}
+        </Button>
         <Button variant="secondary" icon="download" onClick={() => (onClose(), navigate('/import'))}>
           {t('importAccount')}
         </Button>

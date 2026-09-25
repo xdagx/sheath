@@ -305,6 +305,24 @@ try {
   assert.equal(exported.readInt32BE(0), 4);
   step(`exported wallet.data (${exported.length} bytes)`);
 
+  step('wallet built from imported keys only: "Create account" creates a recovery phrase');
+  await page.goto(`${base}/app.html#/home`);
+  await page.locator('.account-chip').click();
+  await page.locator('.account-item').first().waitFor();
+  const accountsBefore = await page.locator('.account-item').count();
+  await page.getByRole('button', { name: '创建账户' }).click();
+  await page.getByText('新的助记词').waitFor();
+  await shot(page, '18-new-phrase');
+  await page.getByRole('button', { name: '稍后提醒我' }).click();
+  await page.getByText('你的助记词尚未备份。').waitFor();
+  await page.locator('.account-chip', { hasText: '账户 1' }).waitFor();
+  // now the wallet has a phrase: the same button adds its next account directly
+  await page.locator('.account-chip').click();
+  await page.locator('.account-item', { hasText: '账户 1' }).waitFor();
+  assert.equal(await page.locator('.account-item').count(), accountsBefore + 1);
+  await page.getByRole('button', { name: '创建账户' }).click();
+  await page.locator('.account-chip', { hasText: '账户 2' }).waitFor();
+
   await ctx.close();
   const relevant = errors.filter((e) => !/Failed to load resource|ERR_/.test(e));
   if (relevant.length) {

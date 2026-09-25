@@ -5,9 +5,26 @@ import { toBase64 } from '@/core/bytes';
 import { checkMnemonic, normalizeMnemonic } from '@/core/keys';
 import type { OwnedBlock } from '@/core/legacy/storage';
 import { looksLikeXdagjWallet } from '@/core/xdagj-wallet';
+import { explorerLink } from '@/shared/networks';
 import { MAX_LEGACY_BLOCKS, type ImportPreview } from '@/shared/types';
-import { call, isPopup, openInTab } from '../api';
-import { Button, Checkbox, FileDrop, FolderPick, Identicon, Notice, Page, PasswordField, Segmented, Skeleton, Spinner, TextField, type PickedFile } from '../components';
+import { call, isPopup, openExternal, openInTab } from '../api';
+import {
+  Button,
+  Checkbox,
+  CopyButton,
+  FileDrop,
+  FolderPick,
+  IconButton,
+  Identicon,
+  Notice,
+  Page,
+  PasswordField,
+  Segmented,
+  Skeleton,
+  Spinner,
+  TextField,
+  type PickedFile,
+} from '../components';
 import { fmtAmount, fmtDateTime, middle } from '../format';
 import { Icon } from '../icons';
 import { errorText, t, type MessageKey } from '../i18n';
@@ -233,6 +250,32 @@ interface ScanState {
   found: OwnedBlock[];
   reason?: StopReason;
   error?: string;
+}
+
+/** The whole address (to compare with a block explorer), with copy and explorer buttons. */
+function FullAddress({ address }: { address: string }) {
+  const link = explorerLink(network.value, address);
+  return (
+    <span class="addr-line">
+      {/* clicking the address selects it for copying instead of ticking the row */}
+      <span class="mono addr-full" onClick={(e) => e.preventDefault()}>
+        {address}
+      </span>
+      <CopyButton text={address} />
+      {link && (
+        <IconButton
+          icon="external"
+          size={15}
+          label={t('viewInExplorer')}
+          onClick={(e) => {
+            e.preventDefault(); // inside a <label>: do not toggle the row
+            e.stopPropagation();
+            openExternal(link);
+          }}
+        />
+      )}
+    </span>
+  );
 }
 
 /** old addresses an existing account already has (they count towards the per-account limit) */
@@ -464,7 +507,7 @@ export function ImportPreviewPage() {
               <input type="checkbox" checked={on} disabled={disabled} onChange={() => toggleAccount(a.address, on)} />
               <Identicon address={a.address} size={34} />
               <span class="select-main">
-                <span class="mono">{middle(a.address, 9, 8)}</span>
+                <FullAddress address={a.address} />
                 <span class="row-sub">
                   {a.hdIndex !== undefined
                     ? t('hdIndex', { n: a.hdIndex })
@@ -505,11 +548,13 @@ export function ImportPreviewPage() {
                       <Icon name="layers" size={16} />
                     </span>
                     <span class="select-main">
-                      <span class="mono">
-                        {middle(b.address, 8, 8)}
-                        {b.highS && <span class="warn-mark" title={t('highSWarn')}> ⚠</span>}
-                      </span>
+                      <FullAddress address={b.address} />
                       <span class="row-sub">
+                        {b.highS && (
+                          <span class="warn-mark" title={t('highSWarn')}>
+                            ⚠{' '}
+                          </span>
+                        )}
                         {keyLabel(ownerOf(b).index)} · {fmtDateTime(b.time)}
                         {b.kind !== 'address' && ` · ${t(`blockKind_${b.kind}` as MessageKey)}`}
                       </span>

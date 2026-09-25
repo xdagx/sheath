@@ -115,12 +115,15 @@ export function PhraseBackup({
   onSkip,
   busy,
   title,
+  note,
 }: {
   mnemonic: string;
   onConfirmed: () => void;
   onSkip?: () => void;
   busy?: boolean;
   title?: string;
+  /** extra explanation shown above the phrase */
+  note?: string;
 }) {
   const words = mnemonic.split(' ');
   const [revealed, setRevealed] = useState(false);
@@ -153,6 +156,7 @@ export function PhraseBackup({
         }
       >
         <p class="lead">{t('backupDesc')}</p>
+        {note && <Notice kind="info">{note}</Notice>}
         <div class={`phrase ${revealed ? 'revealed' : ''}`} onClick={() => setRevealed(true)}>
           <ol>
             {words.map((w, i) => (
@@ -251,6 +255,40 @@ export function CreatePhrase() {
     }
   };
   return <PhraseBackup mnemonic={mnemonic} busy={busy} onConfirmed={() => finish(true)} onSkip={() => finish(false)} />;
+}
+
+/**
+ * "Create account" in a wallet without a recovery phrase (built from imported keys): creates a
+ * phrase for it, shows it for backup, then adds the phrase's first account.
+ */
+export function CreateWalletPhrase() {
+  const [mnemonic, setMnemonic] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    call('generateMnemonic', { words: 12 }).then((r) => setMnemonic(r.mnemonic), toastError);
+  }, []);
+  if (!mnemonic) return <div class="splash" />;
+  const finish = async (backedUp: boolean) => {
+    setBusy(true);
+    try {
+      applyState(await call('createHdWallet', { mnemonic, backedUp }));
+      navigate('/home', undefined, true);
+    } catch (e) {
+      toastError(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <PhraseBackup
+      title={t('newPhraseTitle')}
+      note={t('newPhraseNote')}
+      mnemonic={mnemonic}
+      busy={busy}
+      onConfirmed={() => finish(true)}
+      onSkip={() => finish(false)}
+    />
+  );
 }
 
 /** Backup flow for an existing wallet that skipped it during onboarding. */

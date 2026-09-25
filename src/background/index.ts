@@ -97,6 +97,10 @@ const handlers: Handlers = {
     await keyring.addHdAccount(name);
     return keyring.state();
   },
+  createHdWallet: async ({ mnemonic, backedUp }) => {
+    await keyring.createHdWallet(mnemonic, backedUp === true);
+    return keyring.state();
+  },
   renameAccount: async ({ id, name }) => {
     await keyring.renameAccount(id, name);
     return keyring.state();

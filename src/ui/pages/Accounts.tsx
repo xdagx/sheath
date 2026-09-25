@@ -11,6 +11,19 @@ import { t, type MessageKey } from '../i18n';
 import { navigate, route } from '../router';
 import { accounts, applyState, balanceOf, describeError, network, refreshBalance, selectedAccount, settings, toast, toastError, wallet } from '../state';
 
+/**
+ * "Create account": the next account of the wallet's recovery phrase, or — for a wallet built only
+ * from imported keys, which has none — a new phrase first. Returns false when it navigated away.
+ */
+export async function createAccount(): Promise<boolean> {
+  if (!wallet.value?.hasMnemonic) {
+    navigate('/create-wallet');
+    return false;
+  }
+  applyState(await call('addHdAccount', {}));
+  return true;
+}
+
 /** Asks for the wallet password, then runs `action`; errors are shown inline. */
 export function PasswordSheet({
   open,
@@ -72,25 +85,23 @@ export function AccountsPage() {
       title={t('accountsTitle')}
       footer={
         <div class="button-row">
-          {wallet.value?.hasMnemonic && (
-            <Button
-              variant="secondary"
-              icon="plus"
-              loading={busy}
-              onClick={async () => {
-                setBusy(true);
-                try {
-                  applyState(await call('addHdAccount', {}));
-                } catch (e) {
-                  toastError(e);
-                } finally {
-                  setBusy(false);
-                }
-              }}
-            >
-              {t('addAccount')}
-            </Button>
-          )}
+          <Button
+            variant="secondary"
+            icon="plus"
+            loading={busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await createAccount();
+              } catch (e) {
+                toastError(e);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {t('addAccount')}
+          </Button>
           <Button variant="secondary" icon="download" onClick={() => navigate('/import')}>
             {t('importAccount')}
           </Button>

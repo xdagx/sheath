@@ -177,6 +177,8 @@ const en = {
 
   accountsTitle: 'Accounts',
   addAccount: 'Create account',
+  newPhraseTitle: 'New recovery phrase',
+  newPhraseNote: 'This wallet has no recovery phrase yet: its accounts were imported from keys or wallet files. New accounts come from this new phrase. Back it up; your imported accounts are not part of it, keep their original files or keys too.',
   importAccount: 'Import',
   manageAccounts: 'Manage',
   accountName: 'Account name',
@@ -323,6 +325,7 @@ const en = {
   err_invalid_fee: 'Invalid fee',
   err_last_account: 'You cannot remove the last account',
   err_no_mnemonic: 'This wallet has no recovery phrase',
+  err_mnemonic_exists: 'This recovery phrase is already in the wallet',
   err_node_url_invalid: 'Enter a valid https:// URL',
   err_node_url_insecure: 'Only https:// URLs are allowed (http only for localhost)',
   err_explorer_url_invalid: 'Invalid explorer URL',
@@ -516,6 +519,8 @@ const zh: Record<MessageKey, string> = {
 
   accountsTitle: '账户',
   addAccount: '创建账户',
+  newPhraseTitle: '新的助记词',
+  newPhraseNote: '当前钱包还没有助记词（账户都是用私钥或钱包文件导入的）。新账户将由这组新助记词生成，请备份好；导入的账户不包含在其中，原来的钱包文件或私钥也请继续保管。',
   importAccount: '导入',
   manageAccounts: '管理',
   accountName: '账户名称',
@@ -662,6 +667,7 @@ const zh: Record<MessageKey, string> = {
   err_invalid_fee: '手续费无效',
   err_last_account: '不能移除最后一个账户',
   err_no_mnemonic: '该钱包没有助记词',
+  err_mnemonic_exists: '钱包中已有这组助记词',
   err_node_url_invalid: '请输入有效的 https:// 地址',
   err_node_url_insecure: '仅允许 https:// 地址（localhost 可使用 http）',
   err_explorer_url_invalid: '区块浏览器地址无效',
