@@ -254,7 +254,12 @@ export function Home() {
                     <Icon name="layers" size={16} />
                   </span>
                   <span class="legacy-main">
-                    <span class="mono">{middle(b, 8, 8)}</span>
+                    <span class="legacy-addr">
+                      <span class="mono" title={b}>
+                        {middle(b, 8, 8)}
+                      </span>
+                      <CopyButton text={b} />
+                    </span>
                     <span class="row-sub">
                       {balances.value[b] ? `${fmtAmount(balanceOf(b), { hide, decimals: 4 })} XDAG` : unknownOnNode.value[b] ? t('notOnNode') : <Skeleton width={70} height={11} />}
                     </span>

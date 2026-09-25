@@ -6,13 +6,44 @@ import type { NetworkKind } from '@/core/tx';
 import { allNetworks, originPattern, validateNodeUrl } from '@/shared/networks';
 import type { Contact, NetworkConfig, Settings } from '@/shared/types';
 import { call, openExternal } from '../api';
-import { Button, CopyButton, Empty, Identicon, IconButton, Notice, Page, PasswordField, Row, Segmented, Sheet, TextField, Toggle } from '../components';
+import { Button, CopyButton, Empty, Identicon, IconButton, Notice, Page, PasswordField, Row, Segmented, Sheet, Spinner, TextField, Toggle } from '../components';
 import { middle } from '../format';
 import { Icon } from '../icons';
 import { errorText, networkLabel, t, type MessageKey } from '../i18n';
 import { navigate } from '../router';
 import { applySettings, applyState, clearLocalCaches, contacts, describeError, loadContacts, network, settings, toast, toastError, wallet } from '../state';
 import { PasswordSheet } from './Accounts';
+
+const RELEASES_URL = 'https://github.com/xdagx/xdagx/releases';
+
+/**
+ * "Check for updates". A Chrome Web Store install (its manifest gets an update_url) is updated by
+ * Chrome itself; this only asks Chrome to check now. A hand-installed copy cannot replace its own
+ * files (and downloading code is not allowed), so it opens the download page instead.
+ */
+function useUpdateCheck() {
+  const fromStore = 'update_url' in chrome.runtime.getManifest();
+  const [checking, setChecking] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+  const check = async () => {
+    if (!fromStore) {
+      openExternal(RELEASES_URL);
+      return;
+    }
+    setChecking(true);
+    try {
+      const r = await chrome.runtime.requestUpdateCheck();
+      setReady(r.status === 'update_available');
+      setMessage(r.status === 'update_available' ? t('updateAvailable', { v: r.version ?? '' }) : r.status === 'no_update' ? t('upToDate') : t('updateThrottled'));
+    } catch (e) {
+      toastError(e);
+    } finally {
+      setChecking(false);
+    }
+  };
+  return { fromStore, checking, message, ready, check };
+}
 
 async function patch(p: Partial<Settings>) {
   try {
@@ -29,6 +60,7 @@ export function SettingsPage() {
   const [sheet, setSheet] = useState<null | 'language' | 'autolock' | 'password' | 'phrase' | 'export' | 'reset'>(null);
   const [phrase, setPhrase] = useState<string | null>(null);
   const version = chrome.runtime.getManifest().version;
+  const update = useUpdateCheck();
   const lockLabel = (m: number) => (m === 0 ? t('autoLockNever') : m >= 60 ? t('hours', { n: m / 60 }) : t('minutes', { n: m }));
   return (
     <Page title={t('settingsTitle')}>
@@ -88,6 +120,14 @@ export function SettingsPage() {
       </div>
       <div class="card list-card">
         <Row icon="info" title={`${t('appName')} ${version}`} subtitle={<span class="wrap">{t('unofficialNote')}</span>} />
+        <Row
+          icon="refresh"
+          title={t('checkUpdates')}
+          subtitle={<span class="wrap">{update.message ?? t(update.fromStore ? 'autoUpdateNote' : 'manualUpdateNote')}</span>}
+          right={update.checking ? <Spinner size={16} /> : undefined}
+          onClick={update.check}
+        />
+        {update.ready && <Row icon="refresh" title={t('restartToUpdate')} onClick={() => chrome.runtime.reload()} />}
         <Row icon="external" title="XDagger/xdagj" subtitle={t('sourceCode')} onClick={() => openExternal('https://github.com/XDagger/xdagj')} />
         <Row icon="external" title="XDagger/xdag" subtitle={t('legacyClientSubtitle')} onClick={() => openExternal('https://github.com/XDagger/xdag')} />
         <Row icon="external" title="XDagger/XDAG-Pro" onClick={() => openExternal('https://github.com/XDagger/xdag-pro')} />

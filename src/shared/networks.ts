@@ -1,13 +1,13 @@
 import type { NetworkConfig, Settings } from './types';
 
-/** Public endpoints used by the official XDAG Pro wallet (lib/common/global.dart). */
+/** Public RPC endpoints used by the official XDAG Pro wallet (lib/common/global.dart); the community block explorer. */
 export const BUILTIN_NETWORKS: NetworkConfig[] = [
   {
     id: 'mainnet',
     name: 'Mainnet',
     kind: 'mainnet',
     rpcUrl: 'https://mainnet-rpc.xdagj.org',
-    explorerUrl: 'https://mainnet-explorer.xdagj.org',
+    explorerUrl: 'https://explorer.xdag.io',
     builtin: true,
   },
   {
@@ -37,9 +37,16 @@ export function currentNetwork(settings: Settings): NetworkConfig {
   return allNetworks(settings).find((n) => n.id === settings.networkId) ?? BUILTIN_NETWORKS[0]!;
 }
 
+/**
+ * Explorer page of an address or block. The XDAG explorer (github.com/XDagger/explorer,
+ * BlockController) takes the id from the raw request path without URL-decoding it, and its route
+ * accepts '/' in the id: a 2018 block address, which may contain '+' and '/', must be put in the
+ * path as it is ('%2B' is not found). Only address / hash characters are allowed through.
+ */
 export function explorerLink(net: NetworkConfig, addressOrBlock: string): string | null {
-  if (!net.explorerUrl) return null;
-  return `${net.explorerUrl.replace(/\/+$/, '')}/block/${encodeURIComponent(addressOrBlock)}`;
+  const id = addressOrBlock.trim();
+  if (!net.explorerUrl || !/^[A-Za-z0-9+/]{20,128}$/.test(id)) return null;
+  return `${net.explorerUrl.replace(/\/+$/, '')}/block/${id}`;
 }
 
 /** Accepts only http(s) URLs; plain http is allowed for localhost nodes only. */

@@ -1843,6 +1843,20 @@ html[data-mode='tab'] .sheet-root {
   gap: 2px;
 }
 
+.legacy-addr {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.legacy-addr .icon-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  flex: none;
+}
+
 .tx-group {
   display: flex;
   flex-direction: column;
