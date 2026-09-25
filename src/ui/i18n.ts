@@ -27,6 +27,12 @@ const en = {
   add: 'Add',
   open: 'Open',
   today: 'Today',
+  net_mainnet: 'Mainnet',
+  net_testnet: 'Testnet',
+  net_devnet: 'Devnet',
+  legacyClientSubtitle: '2018 C client · wallet.dat',
+  clipboardUnavailable: 'Clipboard unavailable',
+  fileTooLarge: 'File too large',
   yesterday: 'Yesterday',
 
   welcomeTitle: 'Sheath',
@@ -59,7 +65,7 @@ const en = {
   revealPhrase: 'Click to reveal',
   revealHint: 'Make sure nobody is watching your screen.',
   copyPhrase: 'Copy phrase',
-  phraseCopiedWarn: 'Copied. The clipboard will be cleared in 60 seconds.',
+  phraseCopiedWarn: 'Copied. Clear your clipboard after pasting.',
   writtenDown: "I've written it down",
   remindLater: 'Remind me later',
   backupWarn1: 'Never share it with anyone, including support staff.',
@@ -75,7 +81,7 @@ const en = {
   tabXdagj: 'xdagj file',
   tabLegacy: '2018 wallet',
   mnemonicLabel: 'Recovery phrase',
-  mnemonicPlaceholder: 'Enter 12 or 24 words separated by spaces',
+  mnemonicPlaceholder: 'Enter your 12–24 word recovery phrase, separated by spaces',
   wordsCount: '{n} words',
   allowBadChecksum: 'Import even though the checksum is invalid (advanced)',
   privateKeyLabel: 'Private key (hex)',
@@ -122,7 +128,7 @@ const en = {
   totalBalance: 'Balance',
   send: 'Send',
   receive: 'Receive',
-  migrate: 'Migrate',
+  migrate: 'Move',
   explorer: 'Explorer',
   activity: 'Activity',
   noActivity: 'No transactions yet',
@@ -332,6 +338,12 @@ const zh: Record<MessageKey, string> = {
   add: '添加',
   open: '打开',
   today: '今天',
+  net_mainnet: '主网',
+  net_testnet: '测试网',
+  net_devnet: '开发网',
+  legacyClientSubtitle: '2018 C 客户端 · wallet.dat',
+  clipboardUnavailable: '剪贴板不可用',
+  fileTooLarge: '文件过大',
   yesterday: '昨天',
 
   welcomeTitle: '藏锋',
@@ -364,7 +376,7 @@ const zh: Record<MessageKey, string> = {
   revealPhrase: '点击显示',
   revealHint: '请确保周围没有人或摄像头在看你的屏幕。',
   copyPhrase: '复制助记词',
-  phraseCopiedWarn: '已复制，剪贴板将在 60 秒后清空。',
+  phraseCopiedWarn: '已复制，粘贴后请清空剪贴板。',
   writtenDown: '我已抄写好',
   remindLater: '稍后提醒我',
   backupWarn1: '切勿向任何人透露，包括自称客服的人。',
@@ -380,7 +392,7 @@ const zh: Record<MessageKey, string> = {
   tabXdagj: 'xdagj 文件',
   tabLegacy: '2018 旧钱包',
   mnemonicLabel: '助记词',
-  mnemonicPlaceholder: '输入 12 或 24 个单词，以空格分隔',
+  mnemonicPlaceholder: '输入 12–24 个单词的助记词，以空格分隔',
   wordsCount: '{n} 个单词',
   allowBadChecksum: '校验和不正确也继续导入（高级）',
   privateKeyLabel: '私钥（十六进制）',
@@ -427,8 +439,8 @@ const zh: Record<MessageKey, string> = {
   totalBalance: '余额',
   send: '转账',
   receive: '收款',
-  migrate: '迁移',
-  explorer: '浏览器',
+  migrate: '转移',
+  explorer: '区块浏览器',
   activity: '交易记录',
   noActivity: '暂无交易',
   noActivityDesc: '收款和转账记录会显示在这里。',
@@ -487,7 +499,7 @@ const zh: Record<MessageKey, string> = {
   sending: '正在签名并广播…',
   sentSuccess: '转账已发送',
   sentDesc: '通常几分钟内即可确认。',
-  viewInExplorer: '在浏览器中查看',
+  viewInExplorer: '在区块浏览器中查看',
   sendFailed: '转账失败',
   broadcastUnknownTitle: '状态未知',
   broadcastUnknownDesc: '节点没有确认本次广播，交易仍可能成功。再次转账前，请先在交易记录或区块浏览器中确认。',
@@ -630,6 +642,14 @@ export function t(key: MessageKey, vars?: Record<string, string | number>): stri
 export function errorText(code: string, detail?: string): string {
   const key = `err_${code}` as MessageKey;
   if (key in en) return t(key, { v: detail ?? '' });
+  if (code === 'network_mismatch' && detail && ['mainnet', 'testnet', 'devnet'].includes(detail)) {
+    return t('err_network_mismatch', { v: t(`net_${detail}` as MessageKey) });
+  }
   if (code.startsWith('mnemonic_')) return t('err_invalid_mnemonic');
   return t('err_internal', { v: detail || code });
+}
+
+/** Display name of a network: built-in networks are translated, custom ones keep the user's name. */
+export function networkLabel(net: { builtin: boolean; kind: string; name: string }): string {
+  return net.builtin ? t(`net_${net.kind}` as MessageKey) : net.name;
 }

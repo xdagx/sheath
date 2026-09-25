@@ -7,9 +7,13 @@ _Last updated / 最后更新：2026-09-25_
 Sheath — Self-Custody Wallet for XDAG ("the extension", Chinese name 藏锋) is a self-custody wallet for the XDAG cryptocurrency. It is developed by an
 independent community publisher and is not affiliated with the XDAG / XDagger core team.
 
-**What stays on your device.** Your recovery phrase, private keys, imported wallet files and account list
-are encrypted with your password (PBKDF2-SHA256 + AES-256-GCM) and stored only in your browser's extension
-storage. They are never sent to the publisher or to any third party. Your password is never stored.
+**What stays on your device.** Your recovery phrase and private keys (including keys imported from wallet
+files) and your account list are encrypted with your password (PBKDF2-SHA256 + AES-256-GCM) and stored only in
+your browser's extension storage. The recovery phrase and private keys never leave the extension; your password
+is never stored. Settings, your address book (names, addresses, notes) and a short list of recently sent
+transfers (addresses, amounts, fees, remarks; at most 100 entries, kept up to three days) are kept in local
+extension storage without encryption. While the wallet is unlocked, a cached balance list is kept in memory-only
+session storage. None of this is sent to the publisher.
 
 **What the extension sends over the network.** Only the requests needed to operate a wallet, and only to the
 XDAG RPC node you have selected (by default `mainnet-rpc.xdagj.org` / `testnet-rpc.xdagj.org`, or a custom node
@@ -30,7 +34,7 @@ including the Limited Use requirements.
 **Changes.** If these practices ever change, the change will be described here and announced in the extension
 before it takes effect.
 
-**Permissions.** `storage` (encrypted vault and settings), `alarms` (auto-lock timer), `idle` (lock when your
+**Permissions.** `storage` (encrypted vault, settings, address book, recent transfers), `alarms` (auto-lock timer), `idle` (lock when your
 screen locks), access to the default XDAG RPC nodes, and — only when you add a custom node — access to that
 node's address.
 
@@ -43,9 +47,9 @@ extension at any time; uninstalling removes all locally stored data.
 
 藏锋 — XDAG 自托管钱包（英文名 Sheath，以下简称“本插件”）是 XDAG 加密货币的自托管钱包，由独立的社区开发者发布，与 XDAG / XDagger 核心团队无隶属关系。
 
-**保存在本机的数据。** 助记词、私钥、导入的钱包文件和账户列表均使用你的密码加密（PBKDF2-SHA256 + AES-256-GCM），只保存在浏览器的扩展存储中，绝不会发送给开发者或任何第三方。你的密码不会被保存。
+**保存在本机的数据。** 助记词、私钥（包括从钱包文件导入的密钥）和账户列表均使用你的密码加密（PBKDF2-SHA256 + AES-256-GCM），只保存在浏览器的扩展存储中；助记词和私钥绝不会离开本插件，你的密码不会被保存。设置、地址簿（名称、地址、备注）以及最近发出的转账记录（地址、金额、手续费、备注；最多 100 条、最长保留 3 天）以未加密形式保存在本地扩展存储中；钱包解锁期间，余额缓存保存在仅存于内存的会话存储中。以上内容都不会发送给开发者。
 
-**网络通信。** 仅发送钱包运行所必需的请求，且只发送到你选择的 XDAG RPC 节点（默认 `mainnet-rpc.xdagj.org` / `testnet-rpc.xdagj.org`，或你自行添加的节点）：你的公开地址（用于查询余额、nonce 和交易记录），以及你签名并确认广播的交易。默认节点由第三方运营、并非本插件开发者；与任何网站服务器一样，你所使用的节点可以看到你的 IP 地址以及你查询的地址。写入 XDAG 网络的内容本身就是公开的。打开区块浏览器链接时，页面由你的浏览器从浏览器网站加载。
+**网络通信。** 仅发送钱包运行所必需的请求，且只发送到你选择的 XDAG RPC 节点（默认 `mainnet-rpc.xdagj.org` / `testnet-rpc.xdagj.org`，或你自行添加的节点）：你的公开地址（用于查询余额、nonce 和交易记录），以及你签名并确认广播的交易。默认节点由第三方运营，而非本插件开发者；与任何网站服务器一样，你所使用的节点可以看到你的 IP 地址以及你查询的地址。写入 XDAG 网络的内容本身就是公开的。打开区块浏览器链接时，页面由你的浏览器从区块浏览器网站加载。
 
 **我们不做的事。** 没有统计分析、遥测、广告、追踪、Cookie 或远程代码；开发者不接收、不收集、不出售、不共享也不转让任何个人或财务数据，数据只用于运行钱包本身，绝不用于信用评估、借贷或其它用途。
 
@@ -53,7 +57,7 @@ extension at any time; uninstalling removes all locally stored data.
 
 **变更。** 如果上述做法发生任何变化，会先在本页说明，并在插件内提前告知。
 
-**权限。** `storage`（加密金库与设置）、`alarms`（自动锁定计时）、`idle`（系统锁屏时锁定钱包）、访问默认的 XDAG RPC 节点，以及仅在你添加自定义节点时访问该节点地址。
+**权限。** `storage`（加密金库、设置、地址簿、最近转账记录）、`alarms`（自动锁定计时）、`idle`（系统锁屏时锁定钱包）、访问默认的 XDAG RPC 节点，以及仅在你添加自定义节点时访问该节点地址。
 
 **你的控制权。** 你可以随时导出密钥、重置钱包（设置 → 重置钱包）或卸载插件；卸载会删除所有本地数据。
 

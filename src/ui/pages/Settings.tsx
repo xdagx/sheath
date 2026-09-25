@@ -9,7 +9,7 @@ import { call, openExternal } from '../api';
 import { Button, CopyButton, Empty, Identicon, IconButton, Notice, Page, PasswordField, Row, Segmented, Sheet, TextField, Toggle } from '../components';
 import { middle } from '../format';
 import { Icon } from '../icons';
-import { errorText, t } from '../i18n';
+import { errorText, networkLabel, t, type MessageKey } from '../i18n';
 import { navigate } from '../router';
 import { applySettings, applyState, clearLocalCaches, contacts, describeError, loadContacts, network, settings, toast, toastError, wallet } from '../state';
 import { PasswordSheet } from './Accounts';
@@ -68,7 +68,7 @@ export function SettingsPage() {
         <h3>{t('network')}</h3>
       </div>
       <div class="card list-card">
-        <Row icon="link" title={t('networks')} subtitle={network.value.rpcUrl} onClick={() => navigate('/settings/networks')} right={<span class={`net-dot net-${network.value.kind}`}>{network.value.name}</span>} />
+        <Row icon="link" title={t('networks')} subtitle={network.value.rpcUrl} onClick={() => navigate('/settings/networks')} right={<span class={`net-dot net-${network.value.kind}`}>{networkLabel(network.value)}</span>} />
         <Row icon="users" title={t('addressBook')} onClick={() => navigate('/settings/contacts')} />
       </div>
 
@@ -89,7 +89,7 @@ export function SettingsPage() {
       <div class="card list-card">
         <Row icon="info" title={`${t('appName')} ${version}`} subtitle={<span class="wrap">{t('unofficialNote')}</span>} />
         <Row icon="external" title="XDagger/xdagj" subtitle={t('sourceCode')} onClick={() => openExternal('https://github.com/XDagger/xdagj')} />
-        <Row icon="external" title="XDagger/xdag" subtitle="2018 C client · wallet.dat" onClick={() => openExternal('https://github.com/XDagger/xdag')} />
+        <Row icon="external" title="XDagger/xdag" subtitle={t('legacyClientSubtitle')} onClick={() => openExternal('https://github.com/XDagger/xdag')} />
         <Row icon="external" title="XDagger/XDAG-Pro" onClick={() => openExternal('https://github.com/XDagger/xdag-pro')} />
       </div>
 
@@ -311,7 +311,7 @@ export function NetworksPage() {
               <span class={`radio ${s.networkId === n.id ? 'on' : ''}`} />
               <span class="row-main">
                 <span class="row-title">
-                  {n.name} <span class={`kind kind-${n.kind}`}>{n.kind}</span>
+                  {networkLabel(n)} <span class={`kind kind-${n.kind}`}>{t(`net_${n.kind}` as MessageKey)}</span>
                   {n.builtin && <span class="badge-soft">{t('builtin')}</span>}
                 </span>
                 <span class="row-sub mono">{n.rpcUrl}</span>
@@ -375,9 +375,9 @@ function NetworkEditor({ value, onClose }: { value: NetworkConfig | null; onClos
               value={kind}
               onChange={setKind}
               options={[
-                { value: 'mainnet', label: 'Mainnet' },
-                { value: 'testnet', label: 'Testnet' },
-                { value: 'devnet', label: 'Devnet' },
+                { value: 'mainnet', label: t('net_mainnet') },
+                { value: 'testnet', label: t('net_testnet') },
+                { value: 'devnet', label: t('net_devnet') },
               ]}
             />
           </div>

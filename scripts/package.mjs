@@ -32,8 +32,14 @@ let offset = 0;
 // fixed DOS timestamp (1 Jan 2024) for reproducible archives
 const DOS_TIME = 0, DOS_DATE = ((2024 - 1980) << 9) | (1 << 5) | 1;
 
-for (const file of walk(root)) {
-  const name = Buffer.from(relative(root, file).split('\\').join('/'));
+// runtime files from dist/ (never source maps) plus the licence with its third-party notices
+const entries = [...walk(root)]
+  .filter((f) => !f.endsWith('.map') && !f.endsWith('.DS_Store'))
+  .map((f) => [relative(root, f).split('\\').join('/'), f]);
+entries.push(['LICENSE.txt', 'LICENSE']);
+
+for (const [path, file] of entries) {
+  const name = Buffer.from(path);
   const data = readFileSync(file);
   const deflated = deflateRawSync(data, { level: 9 });
   const crc = crc32(data);

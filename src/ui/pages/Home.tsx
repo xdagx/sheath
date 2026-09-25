@@ -7,7 +7,7 @@ import { call, openExternal } from '../api';
 import { AddressLine, Button, CopyButton, Empty, IconButton, Identicon, Notice, Sheet, Skeleton, Spinner } from '../components';
 import { dayLabel, fmtAmount, fmtDateTime, fmtTime, middle } from '../format';
 import { Icon, type IconName } from '../icons';
-import { t } from '../i18n';
+import { networkLabel, t } from '../i18n';
 import { navigate } from '../router';
 import {
   accounts,
@@ -173,7 +173,7 @@ export function Home() {
         <div class="topbar-right">
           <button class={`net-pill net-${net.kind}`} onClick={() => navigate('/settings/networks')} title={net.rpcUrl}>
             <span class="dot" />
-            {net.name}
+            {networkLabel(net)}
           </button>
           <IconButton icon="lock" label={t('lock')} onClick={async () => applyState(await call('lock'))} />
           <IconButton icon="sliders" label={t('settingsTitle')} onClick={() => navigate('/settings')} />

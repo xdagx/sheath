@@ -323,7 +323,7 @@ export async function copyText(text: string, secret = false): Promise<void> {
       }, 60_000);
     }
   } catch {
-    toast('Clipboard unavailable', 'error');
+    toast(t('clipboardUnavailable'), 'error');
   }
 }
 
@@ -385,7 +385,7 @@ export function FileDrop({ label, file, onFile, accept, hint }: { label: string;
   const read = async (f: File | undefined) => {
     if (!f) return;
     if (f.size > 4 * 1024 * 1024) {
-      toast('File too large', 'error');
+      toast(t('fileTooLarge'), 'error');
       return;
     }
     onFile({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) });

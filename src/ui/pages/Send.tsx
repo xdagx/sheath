@@ -8,7 +8,7 @@ import { call, openExternal } from '../api';
 import { Button, CopyButton, Identicon, IconButton, Notice, Page, QRCode, Sheet, Spinner, TextField, Toggle, copyText } from '../components';
 import { fmtAmount, middle } from '../format';
 import { Icon } from '../icons';
-import { t } from '../i18n';
+import { networkLabel, t } from '../i18n';
 import { navigate, route } from '../router';
 import { accounts, balanceOf, contacts, errorInfo, loadContacts, network, refreshBalance, rpc, selectedAccount, settings } from '../state';
 
@@ -352,7 +352,7 @@ function ReviewSheet({
               </>
             )}
             <dt>{t('network')}</dt>
-            <dd>{network.value.name}</dd>
+            <dd>{networkLabel(network.value)}</dd>
           </dl>
           <Button block size="lg" loading={sending} onClick={onConfirm}>
             {sending ? t('sending') : t('confirmSend')}

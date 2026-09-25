@@ -15,6 +15,7 @@
 
 提交前再做：
 
+0. **仓库必须公开、并有 `main` 分支。** 目前 `xdagx/xdagx` 是私有仓库、且只有 `claude/cool-cerf-ipb93y` 一个分支：商店描述里的主页 / 支持链接、隐私政策链接、审核用测试文件链接在未登录状态下都会 404，“开源”的说法也不成立。请先把代码合并到 `main` 并把仓库设为公开，然后**退出 GitHub 登录**逐个打开这些链接确认可访问。如果仓库要保持私有，请把隐私政策和测试文件放到其它公开地址，替换 LISTING.md 与 PRIVACY.md 中的链接，并删掉描述和截图说明里的“开源”。
 1. 确认 `mainnet-rpc.xdagj.org`、`testnet-rpc.xdagj.org` 可以正常访问（审核期间节点不可用会被判“功能无法使用”）。
 2. `npm ci && npm test && npm run package`，得到 `release/sheath-xdag-wallet-<版本>.zip`。
 3. 如需重新生成素材：`npm run build && node scripts/store-assets.mjs`。
@@ -24,10 +25,10 @@
 
 商店要求在专门的字段里填写一个**可公开访问的 HTTPS 链接**（只写在描述里会被拒）。任选其一：
 
-- 仓库公开时，直接用 `https://github.com/xdagx/xdagx/blob/main/store/PRIVACY.md`（先把代码合并到 `main`）；
-- 或开启 GitHub Pages，发布为 `https://xdagx.github.io/xdagx/privacy`。
+- 仓库公开并已合并到 `main` 时，直接用 `https://github.com/xdagx/xdagx/blob/main/store/PRIVACY.md`；
+- 或开启 GitHub Pages（从 `main` 分支根目录发布），地址为 `https://xdagx.github.io/xdagx/store/PRIVACY.html`。
 
-把链接填进 LISTING.md 描述末尾的 `<PRIVACY POLICY URL>` 占位处。
+把链接同时填进 LISTING.md 英文描述末尾的 `<PRIVACY POLICY URL>` 和中文描述末尾的 `<隐私政策链接>` 两处占位。
 
 ## 2. 准备 Google 账号
 
@@ -71,7 +72,7 @@
 
 ## 9. 审核说明（Test instructions，强烈建议填写）
 
-粘贴 LISTING.md 中的英文说明。审核员无法使用真实资金，所以提供了测试网步骤和
+粘贴 LISTING.md 中的英文说明（其中的测试文件链接依赖第 0 步：仓库公开且有 `main` 分支）。审核员无法使用真实资金，所以提供了测试网步骤和
 [测试用钱包文件](reviewer-test-files/)（`wallet.dat` 密码 `xdag2018`，`xdagj/wallet.data` 密码 `test-password-1`，均为公开测试密钥，切勿转入真实资产）。
 
 ## 10. 提交审核
@@ -89,5 +90,7 @@
 
 ## 名称备选
 
-若不想用 Sheath（英式英语中它也是避孕套的旧称），可换成 **Scabbard**，中文名 **藏锋** 保持不变；只需修改
-`public/_locales/*/messages.json`、`store/brand.json`、`src/ui/i18n.ts`（`appName` / `welcomeTitle` / `passwordAck`）、`store/PRIVACY.md`，再运行 `node scripts/store-assets.mjs` 重新生成素材。
+若不想用 Sheath（英式英语中它也是避孕套的旧称），可换成 **Scabbard**，中文名 **藏锋** 保持不变。
+运行 `grep -rn "Sheath\|sheath" --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=release .` 找出所有出现的位置并逐一替换
+（包括 `public/_locales/*/messages.json`、`store/brand.json`、`src/ui/i18n.ts`、`popup.html`、`app.html`、`store/*.md`、`README.md`、`LICENSE`、`package.json`、`scripts/package.mjs`、`.github/workflows/ci.yml`），
+然后 `npm install --package-lock-only`、`npm run build && node scripts/store-assets.mjs`、`npm run package`。

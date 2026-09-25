@@ -95,7 +95,7 @@ A self-custody wallet for the XDAG cryptocurrency. Users create or import XDAG a
 **storage**
 
 ```
-Keeps the wallet's data on the user's device in chrome.storage.local: the encrypted vault (recovery phrase and private keys, encrypted with the user's password via PBKDF2-SHA256 + AES-256-GCM; the password itself is never stored), the account list, settings, address book and any custom node the user adds. While the wallet is unlocked the derived session key is held in chrome.storage.session (memory only) and is cleared when the wallet locks. Nothing in storage is sent to the publisher or to any third party.
+Keeps the wallet's data on the user's device in chrome.storage.local: the encrypted vault (recovery phrase, private keys and account list, encrypted with the user's password via PBKDF2-SHA256 + AES-256-GCM; the password itself is never stored), settings, the address book, any custom node the user adds, a short log of recently sent transfers (kept up to 3 days) and a failed-unlock counter. While the wallet is unlocked the derived session key and a cached balance list are held in chrome.storage.session (memory only) and cleared when the wallet locks. Nothing is sent to the publisher; public addresses and signed transactions are sent only to the XDAG node the user selects.
 ```
 
 **alarms**
@@ -145,11 +145,13 @@ This is a self-custody XDAG wallet. Reviewers do not need real funds.
 2. Settings (slider icon) > Networks: select "Testnet" (https://testnet-rpc.xdagj.org) if you want to avoid mainnet.
 3. Home: Receive shows the address and QR code; the activity list and address book are under Home and Settings.
 4. Import flows with test-only files (no real funds) from https://github.com/xdagx/xdagx/tree/main/store/reviewer-test-files :
-   - Accounts > Import > "2018 wallet": wallet.dat + dnet_key.dat, password: xdag2018
-   - Accounts > Import > "xdagj file": xdagj/wallet.data, password: test-password-1
+   Click the account name at the top left of Home (opens "Accounts") > Import, then choose the tab:
+   - "2018 wallet": wallet.dat + dnet_key.dat, password: xdag2018
+   - "xdagj file": xdagj/wallet.data, password: test-password-1
+   In the toolbar popup these two tabs show "Open in full page to select files" (file pickers close popups); continue in that tab.
    A wrong password is rejected; the correct one shows the accounts contained in the file.
 5. Auto-lock: Settings > Auto-lock > 1 min, wait one minute: the wallet locks. Locking the OS screen also locks it.
-6. Sending requires a funded address; the send form, fee preview and review screen can be checked without sending.
+6. Sending requires a funded address. Without funds you can fill in the send form and see the fee breakdown and the "Recipient receives" preview; the Review button stays disabled with "Insufficient balance".
 
 The extension has no content scripts and only makes JSON-RPC requests to the selected XDAG node.
 Source: https://github.com/xdagx/xdagx (tests compare its output with the official xdagj / xdag code).

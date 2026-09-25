@@ -1570,6 +1570,12 @@ html[data-mode='tab'] .sheet-root {
   font-size: 12px;
 }
 
+.home-scroll > *,
+.page-body > * {
+  /* scrolling flex columns: children keep their size instead of being squashed */
+  flex-shrink: 0;
+}
+
 .home-scroll {
   flex: 1;
   min-height: 0;

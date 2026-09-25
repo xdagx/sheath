@@ -30,6 +30,8 @@ const legacy = JSON.parse(readFileSync('tests/fixtures/legacy-vectors.json', 'ut
 const MAIN = '8c1b2a3f4e5d6c7b8a99a8b7c6d5e4f3021324354657687980a1b2c3d4e5f607';
 const PEER = legacy.privateKeys[0];
 const OLD_BLOCK = 'gKNRtSL1pUaTpzMuPMznKw49ILtP6qX3';
+// recipient for the send screenshot: not one of the wallet's own accounts
+const STRANGER = '5f0e1d2c3b4a59687766554433221100ffeeddccbbaa99887766554433221101';
 const PASSWORD = 'store-assets-pass';
 
 const node = createMockNode({
@@ -147,8 +149,8 @@ try {
     await popup.locator('.account-item', { hasText: name }).first().click();
     await popup.locator('.account-chip', { hasText: name }).waitFor();
   };
-  const capture = async (lang) => {
-    await selectAccount('Main');
+  const capture = async (lang, mainName) => {
+    await selectAccount(mainName);
     await popup.locator('.tx-row').first().waitFor();
     await settle(popup);
     raw[`home-${lang}`] = await popup.screenshot();
@@ -156,17 +158,20 @@ try {
     await settle(popup);
     raw[`accounts-${lang}`] = await popup.screenshot();
     await popup.keyboard.press('Escape');
-    await popup.goto(`${base}/popup.html#/send?to=${encodeURIComponent(addrOf(PEER))}`);
-    await popup.locator('input[inputmode=decimal]').first().fill('88.8');
-    await popup.locator('.field input').nth(2).fill('thanks');
-    await settle(popup);
-    raw[`send-${lang}`] = await popup.screenshot();
+    // the send form with its fee breakdown is taller than the popup: capture the full-page view
+    await page.goto(`${base}/app.html#/send?to=${encodeURIComponent(addrOf(STRANGER))}`);
+    await page.reload();
+    await page.getByText(mainName).first().waitFor();
+    await page.locator('input[inputmode=decimal]').first().fill('88.8');
+    await page.locator('.field input').nth(2).fill('thanks');
+    await settle(page);
+    raw[`send-${lang}`] = await page.locator('#app').screenshot();
     await popup.goto(`${base}/popup.html#/receive`);
     await popup.locator('.qr').waitFor();
     await settle(popup);
     raw[`receive-${lang}`] = await popup.screenshot();
   };
-  await capture('en');
+  await capture('en', 'Main');
 
   // legacy account home (migrate card)
   await selectAccount('Legacy 1');
@@ -174,13 +179,30 @@ try {
   await settle(popup);
   raw['legacy-home-en'] = await popup.screenshot();
 
-  // ---- Chinese
+  // ---- Chinese: switch the UI and localise the demo data (account and node names)
   await setLang(popup, 'zh');
-  await popup.goto(`${base}/popup.html#/home`);
+  const renameAccount = async (from, to) => {
+    await page.goto(`${base}/app.html#/accounts`);
+    await page.locator('.account-item', { hasText: from }).first().click();
+    await page.locator('.account-hero-name').click();
+    await page.locator('.rename input').fill(to);
+    await page.getByRole('button', { name: '保存' }).click();
+    await page.locator('.account-hero-name', { hasText: to }).waitFor();
+  };
+  await page.goto(`${base}/app.html#/accounts`);
+  await page.reload(); // same-document hash navigation would keep the English UI
+  await renameAccount('Main', '主账户');
+  for (const n of [1, 2, 3]) await renameAccount(`Legacy ${n}`, `旧钱包 ${n}`);
+  await page.goto(`${base}/app.html#/settings/networks`);
+  await page.locator('.net-row', { hasText: RPC }).getByRole('button', { name: '编辑' }).click();
+  await page.getByLabel('名称').fill('主网');
+  await page.getByRole('button', { name: '保存' }).click();
+  await page.locator('.net-row', { hasText: RPC }).locator('.row-title', { hasText: /^主网/ }).waitFor();
+  await selectAccount('旧钱包 1');
   await popup.locator('.legacy-row').waitFor();
   await settle(popup);
   raw['legacy-home-zh'] = await popup.screenshot();
-  await capture('zh');
+  await capture('zh', '主账户');
 
   // lock screen
   await popup.goto(`${base}/popup.html#/home`);
@@ -232,15 +254,16 @@ try {
       const shots = f.shot.map((k) => raw[k]).filter(Boolean);
       const imgs = shots
         .map((s, j) => {
-          const isTab = f.shot[j].startsWith('legacy-import') || f.shot[j].startsWith('legacy-preview');
-          const hgt = isTab ? 600 : 600;
+          // full-page (420x760) captures are shown a little larger when they are the only device
+          const isTab = /^(legacy-import|legacy-preview|send)-/.test(f.shot[j]);
+          const hgt = isTab && shots.length === 1 ? 680 : 600;
           return `<img class="shot" src="${b64(s)}" style="height:${hgt}px;${shots.length > 1 && j === 0 ? 'transform:translateY(-18px)' : 'transform:translateY(18px)'}">`;
         })
         .join('');
       await render(
         `<div style="display:flex;height:100%;align-items:center;padding:0 80px;gap:56px">
            <div style="flex:1;min-width:0">
-             <div class="brand" style="font-size:24px;margin-bottom:40px"><img src="${logo}" width="48" height="48">${lang === 'zh' ? `${brand.nameZh}<span style="font-weight:500;color:#9aa4b6;font-size:18px">&nbsp;· ${brand.descriptorZh}</span>` : `${brand.name}<span style="font-weight:500;color:#9aa4b6;font-size:18px">&nbsp;· ${brand.descriptorEn}</span>`}</div>
+             <div class="brand" style="font-size:24px;margin-bottom:40px"><img src="${logo}" width="48" height="48"><div style="display:flex;flex-direction:column;gap:2px">${lang === 'zh' ? brand.nameZh : brand.name}<span style="font-weight:500;color:#9aa4b6;font-size:16px;white-space:nowrap">${lang === 'zh' ? brand.descriptorZh : brand.descriptorEn}</span></div></div>
              <h1 style="font-size:${lang === 'zh' ? 50 : 48}px;line-height:1.15;letter-spacing:-.02em;font-weight:800">${f.title}</h1>
              <p style="margin-top:22px;font-size:${lang === 'zh' ? 23 : 22}px;line-height:1.55;color:#a9b2c3;max-width:520px">${f.sub}</p>
            </div>

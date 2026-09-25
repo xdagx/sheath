@@ -23,5 +23,5 @@ jobs:
       - run: npm run package
       - uses: actions/upload-artifact@v4
         with:
-          name: xdag-wallet-extension
+          name: sheath-xdag-wallet
           path: release/*.zip

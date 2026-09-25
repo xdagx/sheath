@@ -36,8 +36,10 @@ for (const size of [16, 32, 48, 128]) {
   const art = size === 128 ? 96 : size;
   const pad = (size - art) / 2;
   await page.setViewportSize({ width: size, height: size });
+  // the 128px store icon crops the SVG's 2-unit margin so the tile fills the full 96px art box
+  const art128 = size === 128 ? svg.replace('viewBox="0 0 64 64"', 'viewBox="2 2 60 60"') : svg;
   await page.setContent(
-    `<html><body style="margin:0;background:transparent"><div style="padding:${pad}px">${svg.replace('<svg ', `<svg width="${art}" height="${art}" style="display:block" `)}</div></body></html>`,
+    `<html><body style="margin:0;background:transparent"><div style="padding:${pad}px">${art128.replace('<svg ', `<svg width="${art}" height="${art}" style="display:block" `)}</div></body></html>`,
   );
   await page.screenshot({ path: `public/icons/icon-${size}.png`, omitBackground: true, clip: { x: 0, y: 0, width: size, height: size } });
 }
