@@ -1,0 +1,508 @@
+{
+    "hd": [
+        {
+            "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+            "seed": "5eb00bbddcf069084889a8ab9155568165f5c453ccb85e70811aaed6f6da5fc19a5ac40b389cd370d086206dec8aa6c43daea6690f20ad3d8d48b2d2ce9e38e4",
+            "accounts": [
+                {
+                    "index": 0,
+                    "privateKey": "629bfd702472acbb96e8c9cb38e4c5ecd718d75573781b23146cc594a849da7f",
+                    "publicKey": "0269c310f2e9d80e9185b450e96a64077f4829610a9e8098531448af964fdc861f",
+                    "address": "8CEo7PbLTZT5xttvWe9vX17sZWLTh4d2T"
+                },
+                {
+                    "index": 1,
+                    "privateKey": "c7ad708e9dfef795f53b8388a2753db4300bdff026e64517ea4e45ead1fa4ae4",
+                    "publicKey": "03fdf613db2580be81a8adff28d166e4238915e094cdc047ead322accb4a0eb0df",
+                    "address": "AA5Pj84w7iZWwDNU6iMqMnNWs9DrRjEZ1"
+                },
+                {
+                    "index": 2,
+                    "privateKey": "eed6d39edaf53a403ca605274be5cf815a716e80d9ac54cd19b157f967b912b3",
+                    "publicKey": "0268ff92712708a90495714bd5a528f4ddc2373337693fc48cfe2884c116ea07f3",
+                    "address": "QAjNfMTbodM7ZZhmiYfpupS7Nqsov7VVH"
+                }
+            ]
+        },
+        {
+            "mnemonic": "legal winner thank year wave sausage worth useful legal winner thank yellow",
+            "seed": "878386efb78845b3355bd15ea4d39ef97d179cb712b77d5c12b6be415fffeffe5f377ba02bf3f8544ab800b955e51fbff09828f682052a20faa6addbbddfb096",
+            "accounts": [
+                {
+                    "index": 0,
+                    "privateKey": "1da4e7e83308ea162307eddd11cc1b3f33c072113b056472d5cbb68f5d11e01d",
+                    "publicKey": "02f6799854d0ac3b2d6fe5808f80369381dc7baceef43223c94348a8106c07b7f1",
+                    "address": "8UUV9FDVvN3s3MD3vvNjVUTNEQzBX8JNw"
+                },
+                {
+                    "index": 1,
+                    "privateKey": "ee6a6c07b077ed56971f3ecd9817f9739854756e25881251d49410bd6ddd0f18",
+                    "publicKey": "0340fcc136928640838cd000f6449dec2665907fe73b5902fda46803c56ea65d0e",
+                    "address": "PVcCyCWbEKN2h8VzyoRCFwqdqxjuSCSKF"
+                },
+                {
+                    "index": 2,
+                    "privateKey": "2af63206ebb74bc7288f775ad16f2c9cd6be778e65fda44f78b2210f6f987ca5",
+                    "publicKey": "02c04c6381ccc0452822e317219745df8db539a38a856e53f80172f0a194ba2592",
+                    "address": "61EgPeuuJMnQw26qUs2HM2n6RPZaEVaut"
+                }
+            ]
+        },
+        {
+            "mnemonic": "void come effort suffer camp survey warrior heavy shoot primary clutch crush open amazing screen patrol group space point ten exist slush involve unfold",
+            "seed": "b873212f885ccffbf4692afcb84bc2e55886de2dfa07d90f5c3c239abc31c0a6ce047e30fd8bf6a281e71389aa82d73df74c7bbfb3b06b4639a5cee775cccd3c",
+            "accounts": [
+                {
+                    "index": 0,
+                    "privateKey": "6d33c30f91df70a63c655b1cc46f730c857b40e7f5903c7e697972c332d73c01",
+                    "publicKey": "03c1410da72dd4742e2fa5fb68d0e1150c7548bde181782b1e07da906c18168057",
+                    "address": "5dhkZ23gs6VfALXicfWepuz2Eve9dCvJ4"
+                },
+                {
+                    "index": 1,
+                    "privateKey": "d40e60ea5f16a8d26a13e146f027ae667b95e9d19167c61e93fc685b0c7f5fab",
+                    "publicKey": "0281cbd76f69b2012288611251bd61499584fb4b9ccec2feb22f9dbc7c4344334d",
+                    "address": "HYCERAGZancrFV4DNMy29cL6ef9hQy164"
+                },
+                {
+                    "index": 2,
+                    "privateKey": "82435833a0fda31eaf786722ff2fc0ce128b7ac5bc0097ad857f344d9746f3fd",
+                    "publicKey": "02a7c92f303c97095d8c32d6473fd88bc65f037785f52969e3ad1c79570327d400",
+                    "address": "19uUE5JpHSfGDG31WdexJpVS9vigwGs1"
+                }
+            ]
+        }
+    ],
+    "signatures": [
+        {
+            "privateKey": "1f4e2d9a7c3b5e8f0a1b2c3d4e5f60718293a4b5c6d7e8f90112233445566778",
+            "publicKey": "02f3d864ba5efa3ca63a9351a5d66802e114b7cab9b42c3cfe07f584cb45e13a32",
+            "address": "5xcSXy9S2iHEaxvnTUhpF5fWAYBhoT8yP",
+            "hash": "4a3a8b9e05ee76bbdf270737fcbb07d16fbb910aa6889454b5e0d1bdccf021bb",
+            "r": "55e186408f93cf554863dfefba6a6e1727e84d436e9ba6ae91700ed9d9dc5e3a",
+            "s": "170a39282c1e7e0f3ee2408f2bef458f6411fa56e57c403108d7cf546b873066"
+        },
+        {
+            "privateKey": "1f4e2d9a7c3b5e8f0a1b2c3d4e5f60718293a4b5c6d7e8f90112233445566778",
+            "publicKey": "02f3d864ba5efa3ca63a9351a5d66802e114b7cab9b42c3cfe07f584cb45e13a32",
+            "address": "5xcSXy9S2iHEaxvnTUhpF5fWAYBhoT8yP",
+            "hash": "9d2cfe4eb352ac4bc35c725292ed7da56225cc7f0b6e256aeafea97b129e72ef",
+            "r": "7cb4670522606f0eea0f4cfb39c535530ccdba3ae6ca9aab165eb2a8247876b8",
+            "s": "15f72e9a3f7f6f7c60f70b8883ea9d8034b87a354ffe636aa7ed247c14324d7d"
+        },
+        {
+            "privateKey": "1f4e2d9a7c3b5e8f0a1b2c3d4e5f60718293a4b5c6d7e8f90112233445566778",
+            "publicKey": "02f3d864ba5efa3ca63a9351a5d66802e114b7cab9b42c3cfe07f584cb45e13a32",
+            "address": "5xcSXy9S2iHEaxvnTUhpF5fWAYBhoT8yP",
+            "hash": "1b0cb429aaa522c14447fb5fa1ee2baa03311339f711622f70fc3e0171b951c3",
+            "r": "e9cdc90f6cc6d0406d0c3d8e4acdd9f22efdd26f4f273ba68702d75733b75b2a",
+            "s": "252445cdc8b32e7ac6adc24fe8264c0decd048cb0aa29b7a1a2c99928046d206"
+        },
+        {
+            "privateKey": "00000000000000000000000000000000000000000000000000000000000000ff",
+            "publicKey": "031b38903a43f7f114ed4500b4eac7083fdefece1cf29c63528d563446f972c180",
+            "address": "DF7Yr4GKWoCXZZZXoEczo9oiokwN4P9ZY",
+            "hash": "e9925192e3c7a8fb14c5863cc6d18302cb60b330097df7b9dc93cfda731fc0bd",
+            "r": "79e99ddc57e98c14049cb50f72f188a4e6becfd6fb2e8e08b24341de41f37a53",
+            "s": "7ece23669af613ee1895fccb6fc2b17d2b1f8cbeb8efa94485ca57090811f2a0"
+        },
+        {
+            "privateKey": "00000000000000000000000000000000000000000000000000000000000000ff",
+            "publicKey": "031b38903a43f7f114ed4500b4eac7083fdefece1cf29c63528d563446f972c180",
+            "address": "DF7Yr4GKWoCXZZZXoEczo9oiokwN4P9ZY",
+            "hash": "20fa58b4c3b744717fe7794bc6a70b2f4341f4ec06d06f4cd5b2b9862eba4b5f",
+            "r": "9055cf48adacf7fd38ac7deef6736994d77403d491154ba0a9865ab1f9bda3aa",
+            "s": "2e556a2dcaff2782f13528a1d22ce4137ff7ab17ebcfbe9a9cd35fe4436d8250"
+        },
+        {
+            "privateKey": "00000000000000000000000000000000000000000000000000000000000000ff",
+            "publicKey": "031b38903a43f7f114ed4500b4eac7083fdefece1cf29c63528d563446f972c180",
+            "address": "DF7Yr4GKWoCXZZZXoEczo9oiokwN4P9ZY",
+            "hash": "495e51e632e3399ef0d981fbd6eb10334952db173330bede52d3862245ee3a0e",
+            "r": "abbe554e2f6256e7241c0aaf873c9fd9f3cc69b5b7b3ed9f78cf6afd3e5983fb",
+            "s": "08822b676955f81912c10e4134b3110a63616de4882f3180bea66a46986df7fd"
+        },
+        {
+            "privateKey": "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140",
+            "publicKey": "0379be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "address": "GrLCmVQXoyJXaPJQdqssNqwxvha3ZBTP1",
+            "hash": "4f92ecfaf4d33e9a1569608426dcdf4146b12d4826bbf12ed356b50aeafcf981",
+            "r": "f394b4ef6508a9b7668c6cb6416fde490bd2c47fa596f65c42f230f048a6cf80",
+            "s": "6bd346ff096d2f18da42482e203fc99d5b5b8915a229b764ad39d277bbd6ab6e"
+        },
+        {
+            "privateKey": "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140",
+            "publicKey": "0379be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "address": "GrLCmVQXoyJXaPJQdqssNqwxvha3ZBTP1",
+            "hash": "b36c122dbca6a62a74f09a68e97936d691d85416d23d98f4880107fd516556a9",
+            "r": "1c08d9b47619d34922569a11882ae23682a290761c7b21661fb6172d9a962ac9",
+            "s": "1dd674eae1395303d83423763d1bcce6cbe661de85d86587d8de2dea380d6a7a"
+        },
+        {
+            "privateKey": "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140",
+            "publicKey": "0379be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "address": "GrLCmVQXoyJXaPJQdqssNqwxvha3ZBTP1",
+            "hash": "72ba490139a8f6beeedf6b36e70e952672f43866429bcb362f024b2d34855dc6",
+            "r": "8928f4aad3c14c759b6efacf54a7c7fa77ef0a15b974f00c9285b7f4b4e036d5",
+            "s": "659321d4348956abcfd29623c9483f3b30c11c5f7c7d29ad694d0ffccaf90d43"
+        }
+    ],
+    "bcrypt": [
+        {
+            "password": "",
+            "salt": "040b121920272e353c434a51585f666d",
+            "cost": 4,
+            "key": "9b6d0fb92df7e7c0dcb929feb03b606d33c1a1f29bd0de58"
+        },
+        {
+            "password": "",
+            "salt": "050c131a21282f363d444b525960676e",
+            "cost": 5,
+            "key": "5dc90c43427d85fb99d198735301cad9e0a0d8623bcb1fe8"
+        },
+        {
+            "password": "",
+            "salt": "0c131a21282f363d444b525960676e75",
+            "cost": 12,
+            "key": "756e246310c5f5f3695959fde050c836c3c4ed2e19e65162"
+        },
+        {
+            "password": "a",
+            "salt": "050c131a21282f363d444b525960676e",
+            "cost": 4,
+            "key": "bd790a5236b3562c55590f565e127a4fa4606ca4ff28b87c"
+        },
+        {
+            "password": "a",
+            "salt": "060d141b222930373e454c535a61686f",
+            "cost": 5,
+            "key": "b78dd90333c26d18ecc6d00d32e05fa05a1343bc2cd42940"
+        },
+        {
+            "password": "a",
+            "salt": "0d141b222930373e454c535a61686f76",
+            "cost": 12,
+            "key": "10b2ccbc0083fb78bcdc15230edc319b7d399ba2d8c6eb04"
+        },
+        {
+            "password": "password",
+            "salt": "0c131a21282f363d444b525960676e75",
+            "cost": 4,
+            "key": "32d90f8e191d67ce942e46b2c4cad0f614994b2081bedc0a"
+        },
+        {
+            "password": "password",
+            "salt": "0d141b222930373e454c535a61686f76",
+            "cost": 5,
+            "key": "6b983541fe61737774a776bea824537a76cdfbc86fba42de"
+        },
+        {
+            "password": "password",
+            "salt": "141b222930373e454c535a61686f767d",
+            "cost": 12,
+            "key": "34dcba69313d1079ffad3a7b9f32ef1186261233220ce473"
+        },
+        {
+            "password": "xdag wallet \u5bc6\u7801",
+            "salt": "121920272e353c434a51585f666d747b",
+            "cost": 4,
+            "key": "0bb0f170a92759a9a508a9d1587d2a1b41cf554926658682"
+        },
+        {
+            "password": "xdag wallet \u5bc6\u7801",
+            "salt": "131a21282f363d444b525960676e757c",
+            "cost": 5,
+            "key": "573ea73860fc34c72c3035e1e9a8f98bad7ae5cd1ac4c80d"
+        },
+        {
+            "password": "xdag wallet \u5bc6\u7801",
+            "salt": "1a21282f363d444b525960676e757c83",
+            "cost": 12,
+            "key": "89615f53befeb47c210f319eedf08fc7a5875d05a58007a4"
+        },
+        {
+            "password": "0123456789012345678901234567890123456789012345678901234567890123456789ab",
+            "salt": "4c535a61686f767d848b9299a0a7aeb5",
+            "cost": 4,
+            "key": "8707e0ca00ae9e826eb1b04bd273564402b0962fb1187414"
+        },
+        {
+            "password": "0123456789012345678901234567890123456789012345678901234567890123456789ab",
+            "salt": "4d545b626970777e858c939aa1a8afb6",
+            "cost": 5,
+            "key": "0ea8144b981a81aabd5e21890e20823e32f0dc19e50b6c7f"
+        }
+    ],
+    "aes": [
+        {
+            "key": "00070e151c232a31383f464d545b626970777e858c939aa1",
+            "iv": "636a71787f868d949ba2a9b0b7bec5cc",
+            "plain": "",
+            "cipher": "6e6d1ff0b625687af19c4b4c39eefcfb"
+        },
+        {
+            "key": "01080f161d242b323940474e555c636a71787f868d949ba2",
+            "iv": "646b727980878e959ca3aab1b8bfc6cd",
+            "plain": "03",
+            "cipher": "5a0370ff1cf6be4a21c168f7dce9d0d9"
+        },
+        {
+            "key": "0f161d242b323940474e555c636a71787f868d949ba2a9b0",
+            "iv": "727980878e959ca3aab1b8bfc6cdd4db",
+            "plain": "030a11181f262d343b424950575e65",
+            "cipher": "3667895df3140dd2a79f70952b0b2df3"
+        },
+        {
+            "key": "10171e252c333a41484f565d646b727980878e959ca3aab1",
+            "iv": "737a81888f969da4abb2b9c0c7ced5dc",
+            "plain": "030a11181f262d343b424950575e656c",
+            "cipher": "6533d9a0c35a693f306df945a2c2b76c811d6311b221bdb1d359faf487b947bf"
+        },
+        {
+            "key": "11181f262d343b424950575e656c737a81888f969da4abb2",
+            "iv": "747b828990979ea5acb3bac1c8cfd6dd",
+            "plain": "030a11181f262d343b424950575e656c73",
+            "cipher": "f74c332c14951a76714d45150926b8fb65436d41e9fb8816347b0b5b39881992"
+        },
+        {
+            "key": "20272e353c434a51585f666d747b828990979ea5acb3bac1",
+            "iv": "838a91989fa6adb4bbc2c9d0d7dee5ec",
+            "plain": "030a11181f262d343b424950575e656c737a81888f969da4abb2b9c0c7ced5dc",
+            "cipher": "b5a5383d02a613ed7d08cb1c8e2e4e3a6833ba1cb81d346c302cb4303fd0358f4205c0aa68d97c6276bd84ebb3fa4194"
+        },
+        {
+            "key": "646b727980878e959ca3aab1b8bfc6cdd4dbe2e9f0f7fe05",
+            "iv": "c7ced5dce3eaf1f8ff060d141b222930",
+            "plain": "030a11181f262d343b424950575e656c737a81888f969da4abb2b9c0c7ced5dce3eaf1f8ff060d141b222930373e454c535a61686f767d848b9299a0a7aeb5bcc3cad1d8dfe6edf4fb020910171e252c333a41484f565d646b727980878e959ca3aab1b8",
+            "cipher": "7923c967671cc3dc9143448df43f1a1acdf8f571ddfbc8c8ef545871e7487d3b34830a6f115cc29e6d10025ed16157327f0d31af15dd04f72726fbdf52a73d038984239ab4783fe21cc5ae00957f6438dc4efe403e1e0ea6797e54b824936a3259bfbd0ccdcfa0ad4c87b2f7874856ee"
+        }
+    ],
+    "walletFiles": [
+        {
+            "password": "test-password-1",
+            "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+            "nextAccountIndex": 2,
+            "file": "AAAABBDDw0E57QWFgbKTatOUEIeNAAAAAxBPD5qwqwhY3sWuE54vo6vhMOpAi0U2yhmK79rQTfru/c61Cp3Lngq87+/HSbVBqq6/ha7oY2xqkJQmPANhrwFNfBAT2otevEflAdSnoQYJp81bMKCiiJ3RmJWMSfFkih7KOzeqIWjg0NzyHBbFGsv+HYffkzixC6KBH7HmLu7vxABwzBBcd2EG8K69N38JcJT4KCvDMPnLt1blUbKlhREOy85XLVMD3vkB/rbr3elOqOcog9zl9Dy5ClGoEUFJnJ/pSfFy2hAAGUZtZiCFiVSOxTiTSPiwcKcbBCVAmXoJhnAXOIEkC6sYl1WVGXURKeJPkMclQpxk6BOFRQmMmpWt/Prvch7m/far9aNzP61FYOkLFUtjHsL3fe/LorD4HGe1lxBvjVhGAVDFfuuKh+mwQelKuXhRWmAQIfZxsmLErWN4AvHUYFM=",
+            "accounts": [
+                {
+                    "privateKey": "629bfd702472acbb96e8c9cb38e4c5ecd718d75573781b23146cc594a849da7f",
+                    "address": "8CEo7PbLTZT5xttvWe9vX17sZWLTh4d2T"
+                },
+                {
+                    "privateKey": "c7ad708e9dfef795f53b8388a2753db4300bdff026e64517ea4e45ead1fa4ae4",
+                    "address": "AA5Pj84w7iZWwDNU6iMqMnNWs9DrRjEZ1"
+                },
+                {
+                    "privateKey": "8c1b2a3f4e5d6c7b8a99a8b7c6d5e4f3021324354657687980a1b2c3d4e5f607",
+                    "address": "uusvX5TrtjMrgteAuHQrv3ks9cjZSJng"
+                }
+            ]
+        },
+        {
+            "password": "\u4e2d\u6587\u5bc6\u7801 & \u00fcn\u00efc\u00f6d\u00e9",
+            "mnemonic": "legal winner thank year wave sausage worth useful legal winner thank yellow",
+            "nextAccountIndex": 1,
+            "file": "AAAABBDXpXtdxH/XDHbRpcWU2l6LAAAAARA6fsfdZEkHbt4ipNh73Qf/MCX0YQTcWBitqQB4z01mMn9PibBngIDYc+/8e4ONV8yrz8Nze4UNXUcFbxp2JH0I2hBYoV71DhitCeKuGHDkMNLZYCb48Rc8b2sQd9E18ouB76Gb+fA5gE0d7Z6x9efGIHJORfuvMs7PXFTDQYdGuPGE3xXOjCP7/Qo0Gdvn1e+GYI5x+pxuFPKMDmuUebD7KjBTpTyeV9IqPjqKdDDR2kNLmw==",
+            "accounts": [
+                {
+                    "privateKey": "1da4e7e83308ea162307eddd11cc1b3f33c072113b056472d5cbb68f5d11e01d",
+                    "address": "8UUV9FDVvN3s3MD3vvNjVUTNEQzBX8JNw"
+                }
+            ]
+        },
+        {
+            "password": "",
+            "mnemonic": "",
+            "nextAccountIndex": 0,
+            "file": "AAAABBCe2Q1Ra9na+DVuGRgYnWC+AAAAARAsWGy6wlmfSYe8PnBUM30jMAON9dWWwG2ppGFg0e5rEBFpnjxf05KyfBRW9dSqUuBNFemmiwVKLtaKHC+7hnFonhAa5b3GTkNuvzL9yFGjhlELEAUjOjeF/JGwYhYnRqanEAY=",
+            "accounts": [
+                {
+                    "privateKey": "1f4e2d9a7c3b5e8f0a1b2c3d4e5f60718293a4b5c6d7e8f90112233445566778",
+                    "address": "5xcSXy9S2iHEaxvnTUhpF5fWAYBhoT8yP"
+                }
+            ]
+        }
+    ],
+    "transactions": [
+        {
+            "kind": "account",
+            "network": "mainnet",
+            "privateKey": "1f4e2d9a7c3b5e8f0a1b2c3d4e5f60718293a4b5c6d7e8f90112233445566778",
+            "from": "5xcSXy9S2iHEaxvnTUhpF5fWAYBhoT8yP",
+            "to": "uusvX5TrtjMrgteAuHQrv3ks9cjZSJng",
+            "amount": "12.5",
+            "remark": null,
+            "nonce": "1",
+            "feeNano": "0",
+            "timeMs": 1758800000123,
+            "xdagTime": "1801011200127",
+            "raw": "0000000000000000e1dc5605000000007f00a254a301000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000002b03ff8577d8ef1ca48b17e5a8d040ec0df76436000000800c000000000000005f0fde1342e1be526fd052ae3761351b34c5010a000000800c000000f3d864ba5efa3ca63a9351a5d66802e114b7cab9b42c3cfe07f584cb45e13a32208d0980241b7b7beedf55977e4ea9758e65a5ca2567c420c80d4a712931c5ba3338da5850f2a961fce711de1185574a656bb0e6c92bb8b6550d8596fa653e9a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "hash": "1f1b4985117ecdb301794a237036d726554415e6e9a86b6689e21afc59a0f893",
+            "blockAddress": "k/igWfwa4olma6jp5hVEVSbXNnAjSnkB"
+        },
+        {
+            "kind": "account",
+            "network": "mainnet",
+            "privateKey": "1f4e2d9a7c3b5e8f0a1b2c3d4e5f60718293a4b5c6d7e8f90112233445566778",
+            "from": "5xcSXy9S2iHEaxvnTUhpF5fWAYBhoT8yP",
+            "to": "uusvX5TrtjMrgteAuHQrv3ks9cjZSJng",
+            "amount": "0.123456789",
+            "remark": "hello xdag",
+            "nonce": "42",
+            "feeNano": "0",
+            "timeMs": 1758800001999,
+            "xdagTime": "1801011202048",
+            "raw": "0000000000000000e1dc6955000000000008a254a301000000000000000000000000000000000000000000000000000000000000000000002a00000000000000000000002b03ff8577d8ef1ca48b17e5a8d040ec0df7643638dd9a1f00000000000000005f0fde1342e1be526fd052ae3761351b34c5010a38dd9a1f0000000068656c6c6f207864616700000000000000000000000000000000000000000000f3d864ba5efa3ca63a9351a5d66802e114b7cab9b42c3cfe07f584cb45e13a324d267ae02cd95096514423a8d7f4db31d094df446e8d89323c35fb01646ba8a47965b567cea822b74b6bc9a1abb1c69d2cd98a4ee067b58abb37a04838e2d14b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "hash": "3683c48593c3a12cb2023d374fa0bda0979d6dbab4ccf5d40b8009e1c2c4920e",
+            "blockAddress": "DpLEwuEJgAvU9cy0um2dl6C9oE83PQKy"
+        },
+        {
+            "kind": "account",
+            "network": "mainnet",
+            "privateKey": "8c1b2a3f4e5d6c7b8a99a8b7c6d5e4f3021324354657687980a1b2c3d4e5f607",
+            "from": "uusvX5TrtjMrgteAuHQrv3ks9cjZSJng",
+            "to": "5xcSXy9S2iHEaxvnTUhpF5fWAYBhoT8yP",
+            "amount": "1000000",
+            "remark": null,
+            "nonce": "7",
+            "feeNano": "250000000",
+            "timeMs": 1758800002500,
+            "xdagTime": "1801011202561",
+            "raw": "0000000000000000e1dc570500000000010aa254a301000080b2e60e000000000000000000000000000000000000000000000000000000000700000000000000000000005f0fde1342e1be526fd052ae3761351b34c5010a0000000040420f00000000002b03ff8577d8ef1ca48b17e5a8d040ec0df764360000000040420f00fe588354e3165198683827b60c55194d6ec2ce2e9be6af3cc2c0ddc51a84af04a470aa52d458fc28926858b8cf2d12cabd3cb682668ce0c3ae4db37375bf822a12bf114e23d05df32ce8ae88c65dd82890677f0ac1627f27f50f867c2cccab20000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "hash": "1230df180d920353f2af32f12a5a032b432fc32d8802cc9bb77b2c386cdd1d70",
+            "blockAddress": "cB3dbDgse7ebzAKILcMvQysDWirxMq/y"
+        },
+        {
+            "kind": "account",
+            "network": "testnet",
+            "privateKey": "8c1b2a3f4e5d6c7b8a99a8b7c6d5e4f3021324354657687980a1b2c3d4e5f607",
+            "from": "uusvX5TrtjMrgteAuHQrv3ks9cjZSJng",
+            "to": "5xcSXy9S2iHEaxvnTUhpF5fWAYBhoT8yP",
+            "amount": "3.3",
+            "remark": "memo",
+            "nonce": "3",
+            "feeNano": "50000000",
+            "timeMs": 1758800003700,
+            "xdagTime": "1801011203790",
+            "raw": "0000000000000000e8dc795500000000ce0ea254a301000080f0fa02000000000000000000000000000000000000000000000000000000000300000000000000000000005f0fde1342e1be526fd052ae3761351b34c5010acdcccc4c03000000000000002b03ff8577d8ef1ca48b17e5a8d040ec0df76436cdcccc4c030000006d656d6f00000000000000000000000000000000000000000000000000000000fe588354e3165198683827b60c55194d6ec2ce2e9be6af3cc2c0ddc51a84af04d2c44523dfd213e8abcd9bfca374de6156574c0b21202ada3ce46b4c6eef0e9a452245a57a171bea0c34da056229a4f45963372858da135a602f0d2c8855721c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "hash": "68824c0da348d358e6f11be05b67a83fd175d73a87cc16ce7877c6bb35ab465e",
+            "blockAddress": "XkarNbvGd3jOFsyHOtd10T+oZ1vgG/Hm"
+        },
+        {
+            "kind": "account",
+            "network": "mainnet",
+            "privateKey": "1f4e2d9a7c3b5e8f0a1b2c3d4e5f60718293a4b5c6d7e8f90112233445566778",
+            "from": "5xcSXy9S2iHEaxvnTUhpF5fWAYBhoT8yP",
+            "to": "uusvX5TrtjMrgteAuHQrv3ks9cjZSJng",
+            "amount": "99.999999999",
+            "remark": "0123456789012345678901234567890123456789",
+            "nonce": "12345678901",
+            "feeNano": "1",
+            "timeMs": 1758800004000,
+            "xdagTime": "1801011204097",
+            "raw": "0000000000000000e1dc6955000000000110a254a30100000100000000000000000000000000000000000000000000000000000000000000351cdcdf02000000000000002b03ff8577d8ef1ca48b17e5a8d040ec0df76436fcffffff63000000000000005f0fde1342e1be526fd052ae3761351b34c5010afcffffff630000003031323334353637383930313233343536373839303132333435363738393031f3d864ba5efa3ca63a9351a5d66802e114b7cab9b42c3cfe07f584cb45e13a321d9007961c59364331ab1bea750715d323e46ec8f7946bf5e9654b929736d9466dd707e86606eb44727353c31b26eab547e6baea02de55ea40f776571188ed3900000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "hash": "1ebfea38eee8af45a87463184b506c675ac0588d58559b32856ad5de5efa8dfb",
+            "blockAddress": "+436Xt7VaoUym1VYjVjAWmdsUEsYY3So"
+        },
+        {
+            "kind": "legacy",
+            "network": "mainnet",
+            "privateKey": "1f4e2d9a7c3b5e8f0a1b2c3d4e5f60718293a4b5c6d7e8f90112233445566778",
+            "from": "gKNRtSL1pUaTpzMuPMznKw49ILtP6qX3",
+            "to": "5xcSXy9S2iHEaxvnTUhpF5fWAYBhoT8yP",
+            "amount": "1024.000000001",
+            "remark": "block balance to new address",
+            "nonce": null,
+            "feeNano": "0",
+            "timeMs": 1758800005000,
+            "xdagTime": "1801011205121",
+            "raw": "0000000000000000219d5605000000000114a254a3010000000000000000000080a351b522f5a54693a7332e3ccce72b0e3d20bb4feaa5f70500000000040000000000002b03ff8577d8ef1ca48b17e5a8d040ec0df764360500000000040000626c6f636b2062616c616e636520746f206e6577206164647265737300000000f3d864ba5efa3ca63a9351a5d66802e114b7cab9b42c3cfe07f584cb45e13a3263e43b13ce8511c3d02c66e8b462545b48c79887eafc40ed3eda452d455e52f81853f3e1b36de07af25737a96faafb87154b975bbce1a170419f354b3924c041000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "hash": "5f8e09da3f395a68d705f96ea912402cfdd4c3203cfdb95e2618fa7a6a4fb062",
+            "blockAddress": "YrBPanr6GCZeuf08IMPU/SxAEqlu+QXX"
+        },
+        {
+            "kind": "legacy",
+            "network": "mainnet",
+            "privateKey": "8c1b2a3f4e5d6c7b8a99a8b7c6d5e4f3021324354657687980a1b2c3d4e5f607",
+            "from": "PKcBtHWDSnAWfZntqWPBLedqBShuKSTz",
+            "to": "uusvX5TrtjMrgteAuHQrv3ks9cjZSJng",
+            "amount": "0.5",
+            "remark": null,
+            "nonce": null,
+            "feeNano": "0",
+            "timeMs": 1758800005001,
+            "xdagTime": "1801011205122",
+            "raw": "0000000000000000217d5500000000000214a254a301000000000000000000003ca701b475834a70167d99eda963c12de76a05286e2924f30000008000000000000000005f0fde1342e1be526fd052ae3761351b34c5010a0000008000000000fe588354e3165198683827b60c55194d6ec2ce2e9be6af3cc2c0ddc51a84af0479ce8a31c46c81d55311bac0b296fba2d323ce55d1f438bca4fd29a876f1ed7d10bdf55a0bc90fb6834a5a8759503dd9116ab97598c0b9e84bf6efc2fb6268510000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "hash": "5b95358956f30610cbb47999ac0fa036c1c22ad5b92ad164f95844a6d6f97a83",
+            "blockAddress": "g3r51qZEWPlk0Sq51SrCwTagD6yZebTL"
+        }
+    ],
+    "amounts": [
+        {
+            "xdag": "0",
+            "nano": "0",
+            "cheato": "0",
+            "back": "0.000000000"
+        },
+        {
+            "xdag": "0.1",
+            "nano": "100000000",
+            "cheato": "429496730",
+            "back": "0.100000000"
+        },
+        {
+            "xdag": "0.000000001",
+            "nano": "1",
+            "cheato": "5",
+            "back": "0.000000001"
+        },
+        {
+            "xdag": "1",
+            "nano": "1000000000",
+            "cheato": "4294967296",
+            "back": "1.000000000"
+        },
+        {
+            "xdag": "12.5",
+            "nano": "12500000000",
+            "cheato": "53687091200",
+            "back": "12.500000000"
+        },
+        {
+            "xdag": "0.123456789",
+            "nano": "123456789",
+            "cheato": "530242872",
+            "back": "0.123456789"
+        },
+        {
+            "xdag": "99.999999999",
+            "nano": "99999999999",
+            "cheato": "429496729596",
+            "back": "99.999999999"
+        },
+        {
+            "xdag": "1000000",
+            "nano": "1000000000000000",
+            "cheato": "4294967296000000",
+            "back": "1000000.000000000"
+        },
+        {
+            "xdag": "1024.000000001",
+            "nano": "1024000000001",
+            "cheato": "4398046511109",
+            "back": "1024.000000001"
+        },
+        {
+            "xdag": "1446294144.123456789",
+            "nano": "1446294144123456789",
+            "cheato": "6211786049406557184",
+            "back": "1446294144.123456717"
+        },
+        {
+            "xdag": "3.3",
+            "nano": "3300000000",
+            "cheato": "14173392077",
+            "back": "3.300000000"
+        }
+    ]
+}

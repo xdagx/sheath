@@ -1,0 +1,701 @@
+/**
+ * The keyring owns all secrets. It lives in the MV3 service worker; the decrypted vault is
+ * kept in memory and the vault key in chrome.storage.session (RAM only, trusted contexts) so
+ * the worker can be restarted by Chrome without asking for the password again.
+ */
+import { decodeAddress, isLegacyAddress, isValidAddress, publicKeyToAddress } from '@/core/address';
+import { MIN_FEE_NANO, formatXdag } from '@/core/amount';
+import { fromBase64, fromHex, randomBytes, toBase64, toHex, wipe } from '@/core/bytes';
+import {
+  checkMnemonic,
+  deriveHdKey,
+  generateMnemonic,
+  getPublicKey,
+  isValidPrivateKey,
+  mnemonicToSeed,
+  normalizeMnemonic,
+  parsePrivateKey,
+} from '@/core/keys';
+import { decryptLegacyWallet } from '@/core/legacy/wallet';
+import { RpcError, XdagRpc } from '@/core/rpc';
+import { buildAccountTransfer, buildLegacyTransfer, isValidRemark, totalFee } from '@/core/tx';
+import { EncryptedVault, VAULT_KDF_ITERATIONS, deriveVaultKey, keyFromPassword, openVault, sealVault } from '@/core/vault';
+import { decryptXdagjWallet, encryptXdagjWallet, InvalidFileError, WrongPasswordError } from '@/core/xdagj-wallet';
+import type { RequestOf } from '@/shared/messages';
+import { currentNetwork } from '@/shared/networks';
+import type { Account, AccountSource, ImportPreview, Keyring as KeyringEntry, PendingTx, SendResult, VaultData, WalletState } from '@/shared/types';
+
+type HdKeyring = Extract<KeyringEntry, { type: 'hd' }>;
+import { clearSession, getLocal, getSession, loadSettings, removeLocal, setLocal, setSession } from './store';
+
+export class WalletError extends Error {
+  constructor(readonly code: string, message?: string) {
+    super(message ?? code);
+    this.name = 'WalletError';
+  }
+}
+
+interface StagedImport {
+  kind: ImportPreview['kind'];
+  keys: { priv: Uint8Array; address: string; hdIndex?: number }[];
+  mnemonic?: string;
+  nextIndex?: number;
+  createdAt: number;
+}
+
+const newId = () => toHex(randomBytes(8));
+const PASSWORD_MIN = 8;
+
+function lang(): 'zh' | 'en' {
+  return (globalThis.navigator?.language ?? 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+}
+
+function defaultName(source: AccountSource, n: number, language: string): string {
+  const zh = language === 'zh-CN' || (language === 'auto' && lang() === 'zh');
+  const names: Record<AccountSource, [string, string]> = {
+    created: ['Account', '账户'],
+    mnemonic: ['Account', '账户'],
+    privateKey: ['Imported', '导入账户'],
+    xdagj: ['XDAGJ', 'XDAGJ 钱包'],
+    legacy: ['Legacy', '旧钱包'],
+  };
+  return `${names[source][zh ? 1 : 0]} ${n}`;
+}
+
+export class Keyring {
+  private vault: VaultData | null = null;
+  private key: Uint8Array | null = null;
+  private restoring: Promise<void> | null = null;
+  private staged = new Map<string, StagedImport>();
+  private sendLock = Promise.resolve();
+
+  // ---------------------------------------------------------------- lifecycle
+
+  async isInitialized(): Promise<boolean> {
+    return !!(await getLocal('vault'));
+  }
+
+  /** Restores the unlocked state after a service-worker restart. */
+  async restore(): Promise<boolean> {
+    if (this.vault) return true;
+    if (!this.restoring) {
+      this.restoring = (async () => {
+        const [stored, keyB64] = await Promise.all([getLocal('vault'), getSession('vaultKey')]);
+        if (!stored || !keyB64) return;
+        try {
+          const key = fromBase64(keyB64);
+          this.vault = await openVault<VaultData>(stored, key);
+          this.key = key;
+        } catch {
+          await clearSession();
+        }
+      })().finally(() => (this.restoring = null));
+    }
+    await this.restoring;
+    return !!this.vault;
+  }
+
+  private async requireUnlocked(): Promise<VaultData> {
+    if (!(await this.restore()) || !this.vault) throw new WalletError('locked', 'Wallet is locked');
+    return this.vault;
+  }
+
+  async state(): Promise<WalletState> {
+    const initialized = await this.isInitialized();
+    const unlocked = initialized && (await this.restore());
+    const settings = await loadSettings();
+    const v = this.vault;
+    return {
+      initialized,
+      unlocked,
+      accounts: unlocked && v ? v.accounts : [],
+      selectedAccountId: unlocked && v ? v.selectedAccountId : null,
+      needsBackup: !!v?.keyrings.some((k) => k.type === 'hd' && !k.backedUp),
+      hasMnemonic: !!v?.keyrings.some((k) => k.type === 'hd'),
+      settings,
+    };
+  }
+
+  private async persist(): Promise<void> {
+    if (!this.vault || !this.key) throw new WalletError('locked');
+    const stored = await getLocal('vault');
+    if (!stored) throw new WalletError('not_initialized');
+    const sealed = await sealVault(this.vault, this.key, fromBase64(stored.kdf.salt), stored.kdf.iterations);
+    await setLocal('vault', sealed);
+  }
+
+  private async createStorage(password: string, data: VaultData): Promise<void> {
+    if (await this.isInitialized()) throw new WalletError('already_initialized');
+    if (password.length < PASSWORD_MIN) throw new WalletError('weak_password');
+    const salt = randomBytes(16);
+    const key = await deriveVaultKey(password, salt, VAULT_KDF_ITERATIONS);
+    await setLocal('vault', await sealVault(data, key, salt, VAULT_KDF_ITERATIONS));
+    await setSession('vaultKey', toBase64(key));
+    this.vault = data;
+    this.key = key;
+  }
+
+  private async checkRateLimit(): Promise<void> {
+    const f = await getLocal('unlockFailures');
+    if (f && f.until > Date.now()) throw new WalletError('rate_limited', String(Math.ceil((f.until - Date.now()) / 1000)));
+  }
+
+  private async recordFailure(): Promise<void> {
+    const f = (await getLocal('unlockFailures')) ?? { count: 0, until: 0 };
+    const count = f.count + 1;
+    const delay = count >= 5 ? Math.min(15 * 60_000, 30_000 * 2 ** (count - 5)) : 0;
+    await setLocal('unlockFailures', { count, until: Date.now() + delay });
+  }
+
+  private async passwordKey(password: string): Promise<{ stored: EncryptedVault; key: Uint8Array; data: VaultData }> {
+    await this.checkRateLimit();
+    const stored = await getLocal('vault');
+    if (!stored) throw new WalletError('not_initialized');
+    const key = await keyFromPassword(stored, password);
+    try {
+      const data = await openVault<VaultData>(stored, key);
+      await removeLocal('unlockFailures');
+      return { stored, key, data };
+    } catch {
+      await this.recordFailure();
+      throw new WalletError('wrong_password', 'Incorrect password');
+    }
+  }
+
+  async unlock(password: string): Promise<WalletState> {
+    const { key, data } = await this.passwordKey(password);
+    this.vault = data;
+    this.key = key;
+    await setSession('vaultKey', toBase64(key));
+    return this.state();
+  }
+
+  /** Re-authentication for sensitive operations while unlocked. */
+  async verifyPassword(password: string): Promise<void> {
+    await this.requireUnlocked();
+    await this.passwordKey(password);
+  }
+
+  async lock(): Promise<void> {
+    if (this.key) wipe(this.key);
+    this.vault = null;
+    this.key = null;
+    for (const s of this.staged.values()) s.keys.forEach((k) => wipe(k.priv));
+    this.staged.clear();
+    await clearSession();
+  }
+
+  async changePassword(oldPassword: string, newPassword: string): Promise<void> {
+    await this.requireUnlocked();
+    if (newPassword.length < PASSWORD_MIN) throw new WalletError('weak_password');
+    const { data } = await this.passwordKey(oldPassword);
+    const salt = randomBytes(16);
+    const key = await deriveVaultKey(newPassword, salt, VAULT_KDF_ITERATIONS);
+    await setLocal('vault', await sealVault(data, key, salt, VAULT_KDF_ITERATIONS));
+    await setSession('vaultKey', toBase64(key));
+    this.vault = data;
+    this.key = key;
+  }
+
+  async reset(): Promise<void> {
+    await this.lock();
+    await chrome.storage.local.clear();
+  }
+
+  // ---------------------------------------------------------------- creation
+
+  generateMnemonic(words: 12 | 24 = 12): string {
+    return generateMnemonic(words);
+  }
+
+  async createVault(password: string, mnemonic: string, backedUp: boolean): Promise<void> {
+    const norm = normalizeMnemonic(mnemonic);
+    if (checkMnemonic(norm).status !== 'ok') throw new WalletError('invalid_mnemonic');
+    const settings = await loadSettings();
+    const seed = mnemonicToSeed(norm);
+    const priv = deriveHdKey(seed, 0);
+    wipe(seed);
+    const keyring: KeyringEntry = { id: newId(), type: 'hd', mnemonic: norm, nextIndex: 1, createdAt: Date.now(), backedUp };
+    const account: Account = {
+      id: newId(),
+      name: defaultName('created', 1, settings.language),
+      address: publicKeyToAddress(getPublicKey(priv)),
+      source: 'created',
+      keyringId: keyring.id,
+      hdIndex: 0,
+      groupId: keyring.id,
+      legacyBlocks: [],
+      createdAt: Date.now(),
+    };
+    wipe(priv);
+    await this.createStorage(password, { version: 1, keyrings: [keyring], accounts: [account], selectedAccountId: account.id });
+  }
+
+  // ---------------------------------------------------------------- imports
+
+  async previewImport(req: RequestOf<'previewImport'>): Promise<ImportPreview> {
+    if (await this.isInitialized()) await this.requireUnlocked();
+    const existing = new Set((this.vault?.accounts ?? []).map((a) => a.address));
+    const staged: StagedImport = { kind: req.kind, keys: [], createdAt: Date.now() };
+    let passwordVerified = true;
+    let encrypted = true;
+
+    switch (req.kind) {
+      case 'mnemonic': {
+        const norm = normalizeMnemonic(req.mnemonic);
+        const check = checkMnemonic(norm);
+        if (check.status === 'checksum' && !req.allowBadChecksum) throw new WalletError('mnemonic_checksum');
+        if (check.status !== 'ok' && check.status !== 'checksum') throw new WalletError(`mnemonic_${check.status}`, check.badWord);
+        const seed = mnemonicToSeed(norm);
+        const count = Math.min(Math.max(req.count, 1), 20);
+        for (let i = 0; i < count; i++) {
+          const priv = deriveHdKey(seed, i);
+          staged.keys.push({ priv, address: publicKeyToAddress(getPublicKey(priv)), hdIndex: i });
+        }
+        wipe(seed);
+        staged.mnemonic = norm;
+        staged.nextIndex = count;
+        break;
+      }
+      case 'privateKey': {
+        let priv: Uint8Array;
+        try {
+          priv = parsePrivateKey(req.privateKey);
+        } catch {
+          throw new WalletError('invalid_private_key');
+        }
+        staged.keys.push({ priv, address: publicKeyToAddress(getPublicKey(priv)) });
+        break;
+      }
+      case 'xdagj': {
+        let res;
+        try {
+          res = decryptXdagjWallet(fromBase64(req.file.data), req.filePassword);
+        } catch (e) {
+          if (e instanceof WrongPasswordError) throw new WalletError('wrong_file_password');
+          if (e instanceof InvalidFileError) throw new WalletError('invalid_file', e.message);
+          throw e;
+        }
+        let hd: Map<string, number> | null = null;
+        if (res.mnemonic && checkMnemonic(res.mnemonic).status !== 'word') {
+          const seed = mnemonicToSeed(res.mnemonic);
+          hd = new Map();
+          const upto = Math.max(res.nextAccountIndex, 1) + 5;
+          for (let i = 0; i < upto; i++) {
+            const p = deriveHdKey(seed, i);
+            hd.set(toHex(p), i);
+            wipe(p);
+          }
+          wipe(seed);
+          staged.mnemonic = normalizeMnemonic(res.mnemonic);
+          staged.nextIndex = res.nextAccountIndex;
+        }
+        for (const priv of res.privateKeys) {
+          const hdIndex = hd?.get(toHex(priv));
+          staged.keys.push({ priv, address: publicKeyToAddress(getPublicKey(priv)), ...(hdIndex !== undefined ? { hdIndex } : {}) });
+        }
+        break;
+      }
+      case 'legacy': {
+        let res;
+        try {
+          res = decryptLegacyWallet(
+            fromBase64(req.walletDat.data),
+            req.dnetKeyDat ? fromBase64(req.dnetKeyDat.data) : null,
+            req.filePassword,
+          );
+        } catch (e) {
+          if (e instanceof WrongPasswordError) throw new WalletError('wrong_file_password');
+          if (e instanceof InvalidFileError) throw new WalletError('invalid_file', e.message);
+          throw e;
+        }
+        passwordVerified = res.passwordVerified;
+        encrypted = res.encrypted;
+        // the C client's default key is the last one in wallet.dat: list it first
+        for (const priv of [...res.privateKeys].reverse()) staged.keys.push({ priv, address: publicKeyToAddress(getPublicKey(priv)) });
+        break;
+      }
+    }
+
+    if (!staged.keys.length) throw new WalletError('invalid_file', 'No keys found');
+    const token = newId();
+    // keep at most a few staged imports around
+    if (this.staged.size > 4) {
+      const oldest = [...this.staged.entries()].sort((a, b) => a[1].createdAt - b[1].createdAt)[0]!;
+      oldest[1].keys.forEach((k) => wipe(k.priv));
+      this.staged.delete(oldest[0]);
+    }
+    this.staged.set(token, staged);
+    return {
+      token,
+      kind: req.kind,
+      hasMnemonic: !!staged.mnemonic,
+      passwordVerified,
+      encrypted,
+      accounts: staged.keys.map((k, index) => ({
+        address: k.address,
+        index,
+        alreadyExists: existing.has(k.address),
+        ...(k.hdIndex !== undefined ? { hdIndex: k.hdIndex } : {}),
+      })),
+    };
+  }
+
+  cancelImport(token: string): void {
+    const s = this.staged.get(token);
+    s?.keys.forEach((k) => wipe(k.priv));
+    this.staged.delete(token);
+  }
+
+  async commitImport(req: RequestOf<'commitImport'>): Promise<void> {
+    const staged = this.staged.get(req.token);
+    if (!staged) throw new WalletError('import_expired');
+    const initialized = await this.isInitialized();
+    const settings = await loadSettings();
+    const known = new Set(initialized ? (await this.requireUnlocked()).accounts.map((a) => a.address) : []);
+    const wanted = new Set(req.addresses);
+    const chosen = staged.keys.filter((k) => wanted.has(k.address) && !known.has(k.address));
+    if (!chosen.length) throw new WalletError('nothing_to_import');
+    if (!initialized) {
+      if (!req.newVaultPassword) throw new WalletError('weak_password');
+      await this.createStorage(req.newVaultPassword, { version: 1, keyrings: [], accounts: [], selectedAccountId: null });
+    }
+    const vault = await this.requireUnlocked();
+
+    const groupId = newId();
+    const source: AccountSource = staged.kind === 'mnemonic' ? 'mnemonic' : staged.kind;
+    let hdKeyring: HdKeyring | undefined;
+    if (staged.mnemonic) {
+      hdKeyring = vault.keyrings.find((k): k is HdKeyring => k.type === 'hd' && k.mnemonic === staged.mnemonic);
+      if (!hdKeyring) {
+        hdKeyring = { id: newId(), type: 'hd', mnemonic: staged.mnemonic, nextIndex: 0, createdAt: Date.now(), backedUp: true };
+        vault.keyrings.push(hdKeyring);
+      }
+    }
+    const legacyBlocks = (req.legacyBlocks ?? []).map((b) => b.trim()).filter(isLegacyAddress);
+    let counter = vault.accounts.filter((a) => a.source === source).length;
+    let first: Account | null = null;
+    for (const k of chosen) {
+      let keyringId: string;
+      if (hdKeyring && k.hdIndex !== undefined) {
+        keyringId = hdKeyring.id;
+        hdKeyring.nextIndex = Math.max(hdKeyring.nextIndex, k.hdIndex + 1, staged.nextIndex ?? 0);
+      } else {
+        const kr: KeyringEntry = { id: newId(), type: 'key', privateKey: toHex(k.priv), createdAt: Date.now() };
+        vault.keyrings.push(kr);
+        keyringId = kr.id;
+      }
+      counter++;
+      const account: Account = {
+        id: newId(),
+        name: defaultName(source, counter, settings.language),
+        address: k.address,
+        source,
+        keyringId,
+        ...(hdKeyring && k.hdIndex !== undefined ? { hdIndex: k.hdIndex } : {}),
+        groupId,
+        legacyBlocks: first ? [] : legacyBlocks,
+        createdAt: Date.now(),
+      };
+      first ??= account;
+      vault.accounts.push(account);
+    }
+    vault.selectedAccountId = first!.id;
+    this.cancelImport(req.token);
+    await this.persist();
+  }
+
+  // ---------------------------------------------------------------- accounts
+
+  private primaryHd(vault: VaultData): HdKeyring | undefined {
+    return vault.keyrings.find((k): k is HdKeyring => k.type === 'hd');
+  }
+
+  async addHdAccount(name?: string): Promise<void> {
+    const vault = await this.requireUnlocked();
+    const settings = await loadSettings();
+    let kr = this.primaryHd(vault);
+    if (!kr) throw new WalletError('no_mnemonic');
+    const seed = mnemonicToSeed(kr.mnemonic);
+    try {
+      for (let guard = 0; guard < 100; guard++) {
+        const index = kr.nextIndex++;
+        const priv = deriveHdKey(seed, index);
+        const address = publicKeyToAddress(getPublicKey(priv));
+        wipe(priv);
+        if (vault.accounts.some((a) => a.address === address)) continue;
+        const n = vault.accounts.filter((a) => a.keyringId === kr!.id).length + 1;
+        const account: Account = {
+          id: newId(),
+          name: name?.trim() || defaultName('created', n, settings.language),
+          address,
+          source: 'created',
+          keyringId: kr.id,
+          hdIndex: index,
+          groupId: kr.id,
+          legacyBlocks: [],
+          createdAt: Date.now(),
+        };
+        vault.accounts.push(account);
+        vault.selectedAccountId = account.id;
+        await this.persist();
+        return;
+      }
+    } finally {
+      wipe(seed);
+    }
+    throw new WalletError('derivation_failed');
+  }
+
+  private account(vault: VaultData, id: string): Account {
+    const a = vault.accounts.find((x) => x.id === id);
+    if (!a) throw new WalletError('unknown_account');
+    return a;
+  }
+
+  async renameAccount(id: string, name: string): Promise<void> {
+    const vault = await this.requireUnlocked();
+    const trimmed = name.trim().slice(0, 40);
+    if (!trimmed) throw new WalletError('invalid_name');
+    this.account(vault, id).name = trimmed;
+    await this.persist();
+  }
+
+  async selectAccount(id: string): Promise<void> {
+    const vault = await this.requireUnlocked();
+    this.account(vault, id);
+    vault.selectedAccountId = id;
+    await this.persist();
+  }
+
+  async removeAccount(id: string, password: string): Promise<void> {
+    await this.verifyPassword(password);
+    const vault = await this.requireUnlocked();
+    const acct = this.account(vault, id);
+    if (vault.accounts.length <= 1) throw new WalletError('last_account');
+    vault.accounts = vault.accounts.filter((a) => a.id !== id);
+    const kr = vault.keyrings.find((k) => k.id === acct.keyringId);
+    if (kr?.type === 'key' && !vault.accounts.some((a) => a.keyringId === kr.id)) {
+      vault.keyrings = vault.keyrings.filter((k) => k.id !== kr.id);
+    }
+    if (vault.selectedAccountId === id) vault.selectedAccountId = vault.accounts[0]!.id;
+    await this.persist();
+  }
+
+  async setLegacyBlocks(id: string, blocks: string[]): Promise<void> {
+    const vault = await this.requireUnlocked();
+    const clean = [...new Set(blocks.map((b) => b.trim()).filter(Boolean))];
+    if (clean.some((b) => !isLegacyAddress(b))) throw new WalletError('invalid_block_address');
+    if (clean.length > 50) throw new WalletError('too_many_blocks');
+    this.account(vault, id).legacyBlocks = clean;
+    await this.persist();
+  }
+
+  async markBackedUp(password: string): Promise<void> {
+    await this.verifyPassword(password);
+    const vault = await this.requireUnlocked();
+    vault.keyrings.forEach((k) => {
+      if (k.type === 'hd') k.backedUp = true;
+    });
+    await this.persist();
+  }
+
+  private privateKeyOf(vault: VaultData, acct: Account): Uint8Array {
+    const kr = vault.keyrings.find((k) => k.id === acct.keyringId);
+    if (!kr) throw new WalletError('missing_key');
+    let priv: Uint8Array;
+    if (kr.type === 'key') priv = fromHex(kr.privateKey);
+    else {
+      if (acct.hdIndex === undefined) throw new WalletError('missing_key');
+      const seed = mnemonicToSeed(kr.mnemonic);
+      priv = deriveHdKey(seed, acct.hdIndex);
+      wipe(seed);
+    }
+    if (!isValidPrivateKey(priv) || publicKeyToAddress(getPublicKey(priv)) !== acct.address) {
+      wipe(priv);
+      throw new WalletError('key_mismatch');
+    }
+    return priv;
+  }
+
+  // ---------------------------------------------------------------- exports
+
+  async exportPrivateKey(id: string, password: string): Promise<string> {
+    await this.verifyPassword(password);
+    const vault = await this.requireUnlocked();
+    const priv = this.privateKeyOf(vault, this.account(vault, id));
+    const hex = toHex(priv);
+    wipe(priv);
+    return hex;
+  }
+
+  async exportMnemonic(password: string, keyringId?: string): Promise<string> {
+    await this.verifyPassword(password);
+    const vault = await this.requireUnlocked();
+    const kr = keyringId ? vault.keyrings.find((k) => k.id === keyringId) : this.primaryHd(vault);
+    if (!kr || kr.type !== 'hd') throw new WalletError('no_mnemonic');
+    return kr.mnemonic;
+  }
+
+  /** Writes every key into an xdagj-compatible wallet.data (importable by the xdagj node). */
+  async exportXdagjWallet(password: string, filePassword: string): Promise<{ file: string; count: number }> {
+    await this.verifyPassword(password);
+    const vault = await this.requireUnlocked();
+    if (!filePassword) throw new WalletError('weak_password');
+    const ordered = [...vault.accounts].sort((a, b) => (a.id === vault.selectedAccountId ? -1 : b.id === vault.selectedAccountId ? 1 : 0));
+    const keys = ordered.map((a) => this.privateKeyOf(vault, a));
+    const hd = this.primaryHd(vault);
+    const mnemonicOk = !!hd && hd.mnemonic.split(' ').length === 12; // xdagj only accepts 12 words
+    try {
+      const file = encryptXdagjWallet(
+        { privateKeys: keys, mnemonic: mnemonicOk ? hd!.mnemonic : '', nextAccountIndex: mnemonicOk ? hd!.nextIndex : 0 },
+        filePassword,
+      );
+      return { file: toBase64(file), count: keys.length };
+    } catch (e) {
+      if (e instanceof WrongPasswordError) throw new WalletError('file_password_too_long');
+      throw e;
+    } finally {
+      keys.forEach((k) => wipe(k));
+    }
+  }
+
+  // ---------------------------------------------------------------- transfers
+
+  private async serialize<T>(fn: () => Promise<T>): Promise<T> {
+    const run = this.sendLock.then(fn, fn);
+    this.sendLock = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    return run;
+  }
+
+  private async rpcForSend() {
+    const settings = await loadSettings();
+    const net = currentNetwork(settings);
+    const rpc = new XdagRpc(net.rpcUrl);
+    let nodeNet: string | null = null;
+    try {
+      nodeNet = await rpc.netType();
+    } catch (e) {
+      if (!(e instanceof RpcError) || /reach|timed out|HTTP/.test(e.message)) throw new WalletError('node_unreachable', (e as Error).message);
+    }
+    if (nodeNet && nodeNet !== net.kind) throw new WalletError('network_mismatch', nodeNet);
+    return { rpc, net };
+  }
+
+  private async recordPending(p: PendingTx): Promise<void> {
+    const list = (await getLocal('pending')) ?? [];
+    const cutoff = Date.now() - 3 * 24 * 3600_000;
+    await setLocal('pending', [p, ...list.filter((x) => x.time > cutoff && x.blockAddress !== p.blockAddress)].slice(0, 100));
+  }
+
+  async send(req: RequestOf<'send'>): Promise<SendResult> {
+    return this.serialize(async () => {
+      const vault = await this.requireUnlocked();
+      const acct = this.account(vault, req.accountId);
+      if (!isValidAddress(req.to)) throw new WalletError(isLegacyAddress(req.to) ? 'legacy_destination' : 'invalid_address');
+      decodeAddress(req.to);
+      if (!isValidRemark(req.remark)) throw new WalletError('invalid_remark');
+      const amount = BigInt(req.amount);
+      const extraFee = BigInt(req.fee);
+      if (extraFee < 0n || extraFee > 1_000_000_000_000n) throw new WalletError('invalid_fee');
+      const fee = totalFee(extraFee);
+      if (amount <= fee) throw new WalletError('amount_below_fee', formatXdag(fee));
+
+      const { rpc, net } = await this.rpcForSend();
+      const balance = await rpc.getBalance(acct.address);
+      if (amount > balance) throw new WalletError('insufficient_funds', formatXdag(balance));
+      const nonce = await rpc.getNonce(acct.address);
+      if (nonce <= 0n) throw new WalletError('invalid_nonce');
+
+      const priv = this.privateKeyOf(vault, acct);
+      let blockAddress: string;
+      try {
+        const block = buildAccountTransfer({
+          network: net.kind,
+          privateKey: priv,
+          to: req.to,
+          amountNano: amount,
+          feeNano: extraFee,
+          nonce,
+          remark: req.remark || null,
+        });
+        blockAddress = await rpc.sendRawTransaction(block.rawHex);
+      } catch (e) {
+        if (e instanceof RpcError) throw new WalletError('rejected', e.message);
+        throw e;
+      } finally {
+        wipe(priv);
+      }
+      const pending: PendingTx = {
+        blockAddress,
+        from: acct.address,
+        to: req.to,
+        amount: amount.toString(),
+        fee: fee.toString(),
+        remark: req.remark,
+        time: Date.now(),
+        networkId: net.id,
+      };
+      await this.recordPending(pending);
+      return { blockAddress, pending };
+    });
+  }
+
+  /** Spends a 2018 block balance (XDAG_FIELD_IN input, no nonce), like xdagj "xfertonew". */
+  async sendLegacy(req: RequestOf<'sendLegacy'>): Promise<SendResult> {
+    return this.serialize(async () => {
+      const vault = await this.requireUnlocked();
+      const acct = this.account(vault, req.accountId);
+      if (!isLegacyAddress(req.fromBlock)) throw new WalletError('invalid_block_address');
+      if (!isValidAddress(req.to)) throw new WalletError(isLegacyAddress(req.to) ? 'legacy_destination' : 'invalid_address');
+      if (!isValidRemark(req.remark)) throw new WalletError('invalid_remark');
+      const amount = BigInt(req.amount);
+      if (amount <= MIN_FEE_NANO) throw new WalletError('amount_below_fee', formatXdag(MIN_FEE_NANO));
+
+      const { rpc, net } = await this.rpcForSend();
+      const balance = await rpc.getBalance(req.fromBlock);
+      if (amount > balance) throw new WalletError('insufficient_funds', formatXdag(balance));
+
+      // The block may belong to any key of the same imported wallet; the node verifies ownership.
+      const candidates = [acct, ...vault.accounts.filter((a) => a.groupId === acct.groupId && a.id !== acct.id)];
+      let lastError = '';
+      for (const cand of candidates) {
+        const priv = this.privateKeyOf(vault, cand);
+        try {
+          const block = buildLegacyTransfer({
+            network: net.kind,
+            privateKey: priv,
+            fromBlock: req.fromBlock,
+            to: req.to,
+            amountNano: amount,
+            remark: req.remark || null,
+          });
+          const blockAddress = await rpc.sendRawTransaction(block.rawHex);
+          const pending: PendingTx = {
+            blockAddress,
+            from: req.fromBlock,
+            to: req.to,
+            amount: amount.toString(),
+            fee: MIN_FEE_NANO.toString(),
+            remark: req.remark,
+            time: Date.now(),
+            networkId: net.id,
+            legacyFrom: req.fromBlock,
+          };
+          await this.recordPending(pending);
+          return { blockAddress, pending };
+        } catch (e) {
+          if (!(e instanceof RpcError)) throw e;
+          lastError = e.message;
+          if (!/input can.?t be used/i.test(e.message)) throw new WalletError('rejected', e.message);
+        } finally {
+          wipe(priv);
+        }
+      }
+      throw new WalletError('block_not_owned', lastError);
+    });
+  }
+}
