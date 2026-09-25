@@ -1,4 +1,6 @@
 {
   "extName": { "message": "XDAG 钱包" },
+  "extShortName": { "message": "XDAG 钱包" },
+  "extActionTitle": { "message": "XDAG 钱包" },
   "extDescription": { "message": "安全的 XDAG 浏览器钱包，支持导入 2018 版 wallet.dat、xdagj wallet.data、助记词和私钥。" }
 }

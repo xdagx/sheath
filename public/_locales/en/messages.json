@@ -1,4 +1,6 @@
 {
   "extName": { "message": "XDAG Wallet" },
+  "extShortName": { "message": "XDAG Wallet" },
+  "extActionTitle": { "message": "XDAG Wallet" },
   "extDescription": { "message": "Secure XDAG wallet. Imports 2018 wallet.dat, xdagj wallet.data, mnemonics and private keys." }
 }

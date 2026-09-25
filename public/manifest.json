@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "__MSG_extName__",
-  "short_name": "XDAG Wallet",
+  "short_name": "__MSG_extShortName__",
   "description": "__MSG_extDescription__",
   "version": "1.0.0",
   "default_locale": "en",
@@ -13,7 +13,7 @@
     "128": "icons/icon-128.png"
   },
   "action": {
-    "default_title": "XDAG Wallet",
+    "default_title": "__MSG_extActionTitle__",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",
