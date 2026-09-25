@@ -15,7 +15,7 @@
 
 提交前再做：
 
-0. **仓库必须公开、并有 `main` 分支。** 目前 `xdagx/xdagx` 是私有仓库、且只有 `claude/cool-cerf-ipb93y` 一个分支：商店描述里的主页 / 支持链接、隐私政策链接、审核用测试文件链接在未登录状态下都会 404，“开源”的说法也不成立。请先把代码合并到 `main` 并把仓库设为公开，然后**退出 GitHub 登录**逐个打开这些链接确认可访问。如果仓库要保持私有，请把隐私政策和测试文件放到其它公开地址，替换 LISTING.md 与 PRIVACY.md 中的链接，并删掉描述和截图说明里的“开源”。
+0. **仓库必须公开，且默认分支为 `main`。** 商店描述里的主页 / 支持链接、隐私政策链接、审核用测试文件链接都指向 `main`，仓库私有时未登录访问会 404，“开源”的说法也不成立。代码已在 `main` 分支上；请在 GitHub 仓库 **Settings → General → Default branch** 把默认分支切换为 `main`（之后可删除旧的 `claude/cool-cerf-ipb93y` 分支），再在同一页底部 **Danger Zone → Change visibility** 设为 Public，然后**退出 GitHub 登录**逐个打开这些链接确认可访问。如果仓库要保持私有，请把隐私政策和测试文件放到其它公开地址，替换 LISTING.md 与 PRIVACY.md 中的链接，并删掉描述和截图说明里的“开源”。
 1. 确认 `mainnet-rpc.xdagj.org`、`testnet-rpc.xdagj.org` 可以正常访问（审核期间节点不可用会被判“功能无法使用”）。
 2. `npm ci && npm test && npm run package`，得到 `release/sheath-xdag-wallet-<版本>.zip`。
 3. 如需重新生成素材：`npm run build && node scripts/store-assets.mjs`。
