@@ -16,7 +16,15 @@ import { createMockNode } from './mock-node.mjs';
 import { pickFolder } from './pick-folder.mjs';
 
 const require = createRequire(import.meta.url);
-const { chromium } = require(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
+let chromium;
+try {
+  ({ chromium } = require(process.env.PLAYWRIGHT_MODULE ?? 'playwright'));
+} catch {
+  console.error('Playwright is not installed (it is not a package.json dependency).\n' +
+    'Run: npm i --no-save -D playwright && npx playwright install chromium\n' +
+    'or set PLAYWRIGHT_MODULE to an existing playwright module directory.');
+  process.exit(1);
+}
 
 const outArg = process.argv.indexOf('--out');
 const OUT = resolve(outArg > 0 ? process.argv[outArg + 1] : 'store/assets');

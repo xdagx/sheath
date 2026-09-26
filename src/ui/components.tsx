@@ -311,17 +311,9 @@ export function Identicon({ address, size = 32 }: { address: string; size?: numb
 export async function copyText(text: string, secret = false): Promise<void> {
   try {
     await navigator.clipboard.writeText(text);
+    // Secrets are not cleared automatically: reading the clipboard back would need the clipboardRead
+    // permission (and a prompt), and blindly overwriting it could destroy something the user copied since.
     toast(secret ? t('phraseCopiedWarn') : t('copied'), 'success');
-    if (secret) {
-      setTimeout(() => {
-        navigator.clipboard.readText().then(
-          (cur) => {
-            if (cur === text) void navigator.clipboard.writeText('');
-          },
-          () => void navigator.clipboard.writeText('').catch(() => undefined),
-        );
-      }, 60_000);
-    }
   } catch {
     toast(t('clipboardUnavailable'), 'error');
   }

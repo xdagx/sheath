@@ -18,7 +18,7 @@
 0. **发布仓库是公开的 `xdagx/sheath`（默认分支 `main`）。** 商店描述里的主页 / 支持链接、隐私政策链接、审核用测试文件链接都指向它。提交前**退出 GitHub 登录**逐个打开确认可访问：<https://github.com/xdagx/sheath>、<https://github.com/xdagx/sheath/blob/main/store/PRIVACY.md>、<https://github.com/xdagx/sheath/tree/main/store/reviewer-test-files>。如果仓库要保持私有，请把隐私政策和测试文件放到其它公开地址，替换 LISTING.md 与 PRIVACY.md 中的链接，并删掉描述和截图说明里的“开源”。
 1. 确认 `mainnet-rpc.xdagj.org`、`testnet-rpc.xdagj.org` 可以正常访问（审核期间节点不可用会被判“功能无法使用”）。
 2. `npm ci && npm test && npm run package`，得到 `release/sheath-xdag-wallet-<版本>.zip`。
-3. 如需重新生成素材：`npm run build && node scripts/store-assets.mjs`。
+3. 如需重新生成素材：`npm run build && node scripts/store-assets.mjs`。需要 Playwright（不在 package.json 里）：先 `npm i --no-save -D playwright && npx playwright install chromium`，或设置 `PLAYWRIGHT_MODULE=$(npm root -g)/playwright` 指向全局安装。
 4. 建议再做一次商标检索（USPTO / 中国商标网）确认 “Sheath / 藏锋” 在第 9、36 类没有冲突；另外可手动在商店里搜一下同名扩展。
 
 ## 1. 公开隐私政策
@@ -59,7 +59,7 @@
 ## 7. 隐私权规范（Privacy practices）
 
 逐项粘贴 LISTING.md 中的：单一用途说明、`storage` / `alarms` / `idle` 说明、主机权限说明（共用一个字段）；
-远程代码选 **No**；数据类型勾选 **Authentication information** 与 **Financial and payment information**；三项承诺全部勾选；填入隐私政策链接。
+远程代码选 **No**；数据类型勾选 **Personally identifiable information**（地址簿里用户输入的联系人名称）、**Authentication information** 与 **Financial and payment information**；三项承诺全部勾选；填入隐私政策链接。
 出现 “Due to the Host Permission, your extension may require an in-depth review” 提示属正常，只是审核会慢一些。
 
 ## 8. 发布设置（Distribution）
@@ -69,7 +69,7 @@
 ## 9. 审核说明（Test instructions，强烈建议填写）
 
 粘贴 LISTING.md 中的英文说明（其中的测试文件链接依赖第 0 步：仓库公开且有 `main` 分支）。审核员无法使用真实资金，所以提供了测试网步骤和
-[测试用钱包文件](reviewer-test-files/)（`wallet.dat` 密码 `xdag2018`，`xdagj/wallet.data` 密码 `test-password-1`，均为公开测试密钥，切勿转入真实资产）。
+[测试用钱包文件](reviewer-test-files/)（GitHub 无法单独下载一个文件夹，说明里已写明用 “Code → Download ZIP” 下载整个仓库后选择 `sheath-main/store/reviewer-test-files`；`wallet.dat` 密码 `xdag2018`，`xdagj/wallet.data` 密码 `test-password-1`，均为公开测试密钥，切勿转入真实资产）。
 
 ## 10. 提交审核
 
@@ -89,4 +89,4 @@
 若不想用 Sheath（英式英语中它也是避孕套的旧称），可换成 **Scabbard**，中文名 **藏锋** 保持不变。
 运行 `grep -rn "Sheath\|sheath" --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=release .` 找出所有出现的位置并逐一替换
 （包括 `public/_locales/*/messages.json`、`store/brand.json`、`src/ui/i18n.ts`、`popup.html`、`app.html`、`store/*.md`、`README.md`、`LICENSE`、`package.json`、`scripts/package.mjs`、`.github/workflows/ci.yml`），
-然后 `npm install --package-lock-only`、`npm run build && node scripts/store-assets.mjs`、`npm run package`。
+然后 `npm install --package-lock-only`、`npm run build && node scripts/store-assets.mjs`、`npm run package`（需要 Playwright（不在 package.json 里）：先 `npm i --no-save -D playwright && npx playwright install chromium`，或设置 `PLAYWRIGHT_MODULE=$(npm root -g)/playwright` 指向全局安装。）。

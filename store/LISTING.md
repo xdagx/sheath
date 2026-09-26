@@ -95,7 +95,7 @@ A self-custody wallet for the XDAG cryptocurrency. Users create or import XDAG a
 **storage**
 
 ```
-Keeps the wallet's data on the user's device in chrome.storage.local: the encrypted vault (recovery phrase, private keys and account list, encrypted with the user's password via PBKDF2-SHA256 + AES-256-GCM; the password itself is never stored), settings, the address book, any custom node the user adds, a short log of recently sent transfers (kept up to 3 days) and a failed-unlock counter. While the wallet is unlocked the derived session key and a cached balance list are held in chrome.storage.session (memory only) and cleared when the wallet locks. Nothing is sent to the publisher; public addresses and signed transactions are sent only to the XDAG node the user selects.
+Keeps the wallet's data on the user's device in chrome.storage.local: the encrypted vault (recovery phrase, private keys and account list, encrypted with the user's password via PBKDF2-SHA256 + AES-256-GCM; the password itself is never stored), settings, the address book (contact names, XDAG addresses and notes the user types), any custom node the user adds, a short log of recently sent transfers (kept up to 3 days) and a failed-unlock counter. While the wallet is unlocked the derived session key and a cached balance list are held in chrome.storage.session (memory only) and cleared when the wallet locks. Nothing is sent to the publisher; public addresses and signed transactions are sent only to the XDAG node the user selects.
 ```
 
 **alarms**
@@ -122,9 +122,10 @@ https://*/*, http://localhost/* and http://127.0.0.1/* are optional_host_permiss
 
 **Data usage** (conservative; disclosures must match behaviour):
 
+- [x] Personally identifiable information — address-book entries the user types (a contact name of up to 40 characters, an XDAG address, an optional note) and the names the user gives their own accounts; stored only on the device (account names inside the encrypted vault, the address book in chrome.storage.local), never transmitted to the publisher or to the node.
 - [x] Authentication information — recovery phrase, private keys and password-derived vault; stored locally and encrypted, never transmitted to the publisher.
 - [x] Financial and payment information — addresses, balances, history and signed transactions; addresses and transactions are sent to the XDAG node the user selects.
-- [ ] Personally identifiable information, Health, Personal communications, Location, Web history, User activity, Website content — not handled.
+- [ ] Health, Personal communications, Location, Web history, User activity, Website content — not handled.
 
 **Certifications:** tick all three (not sold / not used for unrelated purposes / not used for creditworthiness or lending).
 
@@ -142,11 +143,11 @@ https://*/*, http://localhost/* and http://127.0.0.1/* are optional_host_permiss
 This is a self-custody XDAG wallet. Reviewers do not need real funds.
 
 1. After install a welcome tab opens. Click "Create a new wallet", set a password, reveal and confirm the recovery phrase.
-2. Settings (slider icon) > Networks: select "Testnet" (https://testnet-rpc.xdagj.org) if you want to avoid mainnet.
+2. Settings (slider icon) > Networks: "Testnet" (https://testnet-rpc.xdagj.org) avoids mainnet for the send test in step 6. The import test in step 4 reads balances only and works on either network; the labels below assume Mainnet.
 3. Home: Receive shows the address and QR code; the activity list and address book are under Home and Settings.
-4. Import flows with test-only files (no real funds) from https://github.com/xdagx/sheath/tree/main/store/reviewer-test-files :
+4. Import flows with test-only files (no real funds). Test files: open https://github.com/xdagx/sheath, click "Code" > "Download ZIP", unzip it and use the folder sheath-main/store/reviewer-test-files (it contains wallet.dat, dnet_key.dat, storage/, storage-testnet/ and xdagj/wallet.data).
    Click the account name at the top left of Home (opens "Accounts") > Import, then choose the tab:
-   - "2018 wallet": "Choose folder" and select the whole reviewer-test-files folder (wallet.dat, dnet_key.dat and storage/), password: xdag2018. The old addresses are found automatically from storage/; they do not exist on the public networks, so they show "Not on this node". Chrome asks to confirm reading the folder; files are only read locally.
+   - "2018 wallet": "Choose folder" and select that reviewer-test-files folder, password: xdag2018. 8 old addresses are found automatically from storage/ and storage-testnet/. None of them exists on the public networks: on Mainnet the 7 from storage/ show "Not on this node" and the one from storage-testnet/ shows "Other network" (on Testnet it is the other way round). "Balance unavailable" would only mean the node could not be reached. Chrome asks to confirm reading the folder; files are only read locally.
    - "xdagj file": xdagj/wallet.data, password: test-password-1
    In the toolbar popup these two tabs show "Open in full page to select files" (file pickers close popups); continue in that tab.
    A wrong password is rejected; the correct one shows the accounts contained in the file.

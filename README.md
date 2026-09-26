@@ -93,6 +93,8 @@ npm test               # 单元 / 集成测试（与官方 Java / C 实现的交
 npm run typecheck
 npm run mock-node      # 本地模拟 xdagj RPC 节点（http://127.0.0.1:18545），用于界面调试
 npm run build && npm run e2e   # Playwright 端到端测试（真实加载插件 + 模拟节点）
+# e2e 与 scripts/store-assets.mjs 需要 Playwright（不在 package.json 里）：
+#   npm i --no-save -D playwright && npx playwright install chromium   （或设置 PLAYWRIGHT_MODULE 指向全局安装）
 ```
 
 在插件“设置 → 网络 → 添加自定义节点”中填入 `http://127.0.0.1:18545` 即可连接模拟节点；
