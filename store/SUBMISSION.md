@@ -15,7 +15,7 @@
 
 提交前再做：
 
-0. **仓库必须公开，且默认分支为 `main`。** 商店描述里的主页 / 支持链接、隐私政策链接、审核用测试文件链接都指向 `main`，仓库私有时未登录访问会 404，“开源”的说法也不成立。代码已在 `main` 分支上；请在 GitHub 仓库 **Settings → General → Default branch** 把默认分支切换为 `main`（之后可删除旧的 `claude/cool-cerf-ipb93y` 分支），再在同一页底部 **Danger Zone → Change visibility** 设为 Public，然后**退出 GitHub 登录**逐个打开这些链接确认可访问。如果仓库要保持私有，请把隐私政策和测试文件放到其它公开地址，替换 LISTING.md 与 PRIVACY.md 中的链接，并删掉描述和截图说明里的“开源”。
+0. **发布仓库是公开的 `xdagx/sheath`（默认分支 `main`）。** 商店描述里的主页 / 支持链接、隐私政策链接、审核用测试文件链接都指向它。提交前**退出 GitHub 登录**逐个打开确认可访问：<https://github.com/xdagx/sheath>、<https://github.com/xdagx/sheath/blob/main/store/PRIVACY.md>、<https://github.com/xdagx/sheath/tree/main/store/reviewer-test-files>。如果仓库要保持私有，请把隐私政策和测试文件放到其它公开地址，替换 LISTING.md 与 PRIVACY.md 中的链接，并删掉描述和截图说明里的“开源”。
 1. 确认 `mainnet-rpc.xdagj.org`、`testnet-rpc.xdagj.org` 可以正常访问（审核期间节点不可用会被判“功能无法使用”）。
 2. `npm ci && npm test && npm run package`，得到 `release/sheath-xdag-wallet-<版本>.zip`。
 3. 如需重新生成素材：`npm run build && node scripts/store-assets.mjs`。
@@ -23,12 +23,8 @@
 
 ## 1. 公开隐私政策
 
-商店要求在专门的字段里填写一个**可公开访问的 HTTPS 链接**（只写在描述里会被拒）。任选其一：
-
-- 仓库公开并已合并到 `main` 时，直接用 `https://github.com/xdagx/xdagx/blob/main/store/PRIVACY.md`；
-- 或开启 GitHub Pages（从 `main` 分支根目录发布），地址为 `https://xdagx.github.io/xdagx/store/PRIVACY.html`。
-
-把链接同时填进 LISTING.md 英文描述末尾的 `<PRIVACY POLICY URL>` 和中文描述末尾的 `<隐私政策链接>` 两处占位。
+商店要求在专门的字段里填写一个**可公开访问的 HTTPS 链接**（只写在描述里会被拒）。使用 `https://github.com/xdagx/sheath/blob/main/store/PRIVACY.md`；LISTING.md 的描述末尾和“隐私权规范”字段都已填好这个链接。
+如果更想要一个没有 GitHub 界面的纯页面，可在仓库 **Settings → Pages** 从 `main` 分支根目录发布，地址为 `https://xdagx.github.io/sheath/store/PRIVACY.html`，然后替换 LISTING.md 中的链接。
 
 ## 2. 准备 Google 账号
 
@@ -58,7 +54,7 @@
 - 类别：**Tools**（没有加密货币分类）；语言：English，另在语言下拉框中添加 **中文（简体）** 版本的描述和截图。
 - 截图：英文用 `screenshot-en-1..5.png`，中文用 `screenshot-zh-1..5.png`（1280×800）。
 - 小宣传图 440×280（必填，全局只有一张）：`promo-small-440x280.png`；大宣传图 1400×560（可选）：`promo-marquee-1400x560.png`。
-- 主页：`https://github.com/xdagx/xdagx`；支持：`https://github.com/xdagx/xdagx/issues`；Official URL 留空。
+- 主页：`https://github.com/xdagx/sheath`；支持：`https://github.com/xdagx/sheath/issues`；Official URL 留空。
 
 ## 7. 隐私权规范（Privacy practices）
 

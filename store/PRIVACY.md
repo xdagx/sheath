@@ -42,7 +42,7 @@ node's address.
 **Your control.** You can export your keys, reset the wallet (Settings → Reset wallet) or uninstall the
 extension at any time; uninstalling removes all locally stored data.
 
-**Contact.** Please open an issue at https://github.com/xdagx/xdagx/issues.
+**Contact.** Please open an issue at https://github.com/xdagx/sheath/issues.
 
 ## 中文
 
@@ -62,4 +62,4 @@ extension at any time; uninstalling removes all locally stored data.
 
 **你的控制权。** 你可以随时导出密钥、重置钱包（设置 → 重置钱包）或卸载插件；卸载会删除所有本地数据。
 
-**联系方式。** 请在 https://github.com/xdagx/xdagx/issues 提交 issue。
+**联系方式。** 请在 https://github.com/xdagx/sheath/issues 提交 issue。

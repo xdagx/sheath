@@ -14,7 +14,7 @@ import { navigate } from '../router';
 import { applySettings, applyState, clearLocalCaches, contacts, describeError, loadContacts, network, settings, toast, toastError, wallet } from '../state';
 import { PasswordSheet } from './Accounts';
 
-const RELEASES_URL = 'https://github.com/xdagx/xdagx/releases';
+const RELEASES_URL = 'https://github.com/xdagx/sheath/releases';
 
 /**
  * "Check for updates". A Chrome Web Store install (its manifest gets an update_url) is updated by

@@ -18,8 +18,8 @@ Upload: `release/sheath-xdag-wallet-<version>.zip` (`npm run package`). Bump `ve
 
 - **Category:** Tools (alternative: Privacy & Security). There is no crypto category.
 - **Language:** English (the package also ships zh_CN; add a Chinese listing via the language dropdown).
-- **Homepage URL:** https://github.com/xdagx/xdagx
-- **Support URL:** https://github.com/xdagx/xdagx/issues
+- **Homepage URL:** https://github.com/xdagx/sheath
+- **Support URL:** https://github.com/xdagx/sheath/issues
 - **Official URL:** leave empty (needs a domain verified in Search Console).
 - **Mature content:** No.
 - **Screenshots:** `store/assets/screenshot-en-1..5.png` for English, `screenshot-zh-1..5.png` for 中文 (1280×800, 24-bit PNG).
@@ -51,8 +51,8 @@ SECURITY
 NETWORK
 The wallet talks only to the node you select (by default mainnet-rpc.xdagj.org). Your public addresses and the transactions you sign are sent to that node so it can show balances and broadcast transfers.
 
-Source code, file-format documentation and test vectors: https://github.com/xdagx/xdagx
-Privacy policy: <PRIVACY POLICY URL>
+Source code, file-format documentation and test vectors: https://github.com/xdagx/sheath
+Privacy policy: https://github.com/xdagx/sheath/blob/main/store/PRIVACY.md
 ```
 
 ### Detailed description — 中文
@@ -80,8 +80,8 @@ Privacy policy: <PRIVACY POLICY URL>
 网络
 钱包只与你选择的节点通信（默认 mainnet-rpc.xdagj.org）。为显示余额和广播转账，你的公开地址及你签名的交易会发送到该节点。
 
-源代码、文件格式文档与测试向量：https://github.com/xdagx/xdagx
-隐私政策：<隐私政策链接>
+源代码、文件格式文档与测试向量：https://github.com/xdagx/sheath
+隐私政策：https://github.com/xdagx/sheath/blob/main/store/PRIVACY.md
 ```
 
 ## Privacy practices tab
@@ -128,7 +128,7 @@ https://*/*, http://localhost/* and http://127.0.0.1/* are optional_host_permiss
 
 **Certifications:** tick all three (not sold / not used for unrelated purposes / not used for creditworthiness or lending).
 
-**Privacy policy URL:** the public URL of `store/PRIVACY.md` (see SUBMISSION.md, step 1).
+**Privacy policy URL:** https://github.com/xdagx/sheath/blob/main/store/PRIVACY.md
 
 ## Distribution tab
 
@@ -144,7 +144,7 @@ This is a self-custody XDAG wallet. Reviewers do not need real funds.
 1. After install a welcome tab opens. Click "Create a new wallet", set a password, reveal and confirm the recovery phrase.
 2. Settings (slider icon) > Networks: select "Testnet" (https://testnet-rpc.xdagj.org) if you want to avoid mainnet.
 3. Home: Receive shows the address and QR code; the activity list and address book are under Home and Settings.
-4. Import flows with test-only files (no real funds) from https://github.com/xdagx/xdagx/tree/main/store/reviewer-test-files :
+4. Import flows with test-only files (no real funds) from https://github.com/xdagx/sheath/tree/main/store/reviewer-test-files :
    Click the account name at the top left of Home (opens "Accounts") > Import, then choose the tab:
    - "2018 wallet": "Choose folder" and select the whole reviewer-test-files folder (wallet.dat, dnet_key.dat and storage/), password: xdag2018. The old addresses are found automatically from storage/; they do not exist on the public networks, so they show "Not on this node". Chrome asks to confirm reading the folder; files are only read locally.
    - "xdagj file": xdagj/wallet.data, password: test-password-1
@@ -154,5 +154,5 @@ This is a self-custody XDAG wallet. Reviewers do not need real funds.
 6. Sending requires a funded address. Without funds you can fill in the send form and see the fee breakdown and the "Recipient receives" preview; the Review button stays disabled with "Insufficient balance".
 
 The extension has no content scripts and only makes JSON-RPC requests to the selected XDAG node.
-Source: https://github.com/xdagx/xdagx (tests compare its output with the official xdagj / xdag code).
+Source: https://github.com/xdagx/sheath (tests compare its output with the official xdagj / xdag code).
 ```
