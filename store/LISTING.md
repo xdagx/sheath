@@ -40,7 +40,7 @@ WHAT YOU CAN DO
 • Send with a clear fee breakdown: see exactly what the recipient receives before you sign
 • Receive with a QR code, browse your history, keep an address book
 • Several accounts; mainnet, testnet or your own node; English and Chinese; dark and light themes
-• Export an xdagj-compatible wallet.data backup
+• Export an encrypted Sheath backup (keys, account names, 2018 old addresses, address book) or an xdagj-compatible wallet.data
 
 SECURITY
 • Your recovery phrase and keys are stored only in this browser, encrypted with your password (PBKDF2-SHA256 + AES-256-GCM). The password itself is never stored.
@@ -69,7 +69,7 @@ Privacy policy: https://github.com/xdagx/sheath/blob/main/store/PRIVACY.md
 • 转账手续费一目了然：签名前就能看到对方实收金额
 • 二维码收款、交易记录、地址簿
 • 多账户；主网、测试网或自定义节点；中英文界面；深色 / 浅色主题
-• 可导出与 xdagj 兼容的 wallet.data 备份
+• 可导出加密的 Sheath 备份（密钥、账户名、2018 旧地址、地址簿），或与 xdagj 兼容的 wallet.data
 
 安全
 • 助记词和私钥只保存在本浏览器中，并用你的密码加密（PBKDF2-SHA256 + AES-256-GCM），密码本身从不保存
@@ -148,7 +148,7 @@ This is a self-custody XDAG wallet. Reviewers do not need real funds.
 4. Import flows with test-only files (no real funds). Test files: open https://github.com/xdagx/sheath, click "Code" > "Download ZIP", unzip it and use the folder sheath-main/store/reviewer-test-files (it contains wallet.dat, dnet_key.dat, storage/, storage-testnet/ and xdagj/wallet.data).
    Click the account name at the top left of Home (opens "Accounts") > Import, then choose the tab:
    - "2018 wallet": "Choose folder" and select that reviewer-test-files folder, password: xdag2018. 8 old addresses are found automatically from storage/ and storage-testnet/. None of them exists on the public networks: on Mainnet the 7 from storage/ show "Not on this node" and the one from storage-testnet/ shows "Other network" (on Testnet it is the other way round). "Balance unavailable" would only mean the node could not be reached. Chrome asks to confirm reading the folder; files are only read locally.
-   - "xdagj file": xdagj/wallet.data, password: test-password-1
+   - "Wallet file": xdagj/wallet.data, password: test-password-1 (the same tab restores a backup exported by this extension)
    In the toolbar popup these two tabs show "Open in full page to select files" (file pickers close popups); continue in that tab.
    A wrong password is rejected; the correct one shows the accounts contained in the file.
 5. Auto-lock: Settings > Auto-lock > 1 min, wait one minute: the wallet locks. Locking the OS screen also locks it.

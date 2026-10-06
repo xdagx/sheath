@@ -51,7 +51,8 @@ function parseBlock(raw: Uint8Array) {
   const types = readU64le(raw, 8);
   const nib = (i: number) => Number((types >> BigInt(4 * i)) & 0xfn);
   const fields = Array.from({ length: 16 }, (_, i) => raw.subarray(32 * i, 32 * i + 32));
-  let sigIdx = -1, pubIdx = -1;
+  let sigIdx = -1,
+    pubIdx = -1;
   for (let i = 1; i < 16; i++) {
     if (nib(i) === 5 && sigIdx < 0) sigIdx = i;
     if (nib(i) === 6 || nib(i) === 7) pubIdx = i;
@@ -125,7 +126,7 @@ describe('keyring', () => {
     expect(st.unlocked).toBe(true);
   });
 
-  it('adds HD accounts on m/44\'/586\'/0\'/0/i', async () => {
+  it("adds HD accounts on m/44'/586'/0'/0/i", async () => {
     await kr.addHdAccount();
     const st = await kr.state();
     expect(st.accounts.map((a) => a.hdIndex)).toEqual([0, 1]);
@@ -190,7 +191,11 @@ describe('keyring', () => {
     });
     const st = await kr.state();
     const byAddr = (a: string) => st.accounts.find((x) => x.address === a)!;
-    expect(byAddr(def!.address).legacyBlocks).toEqual(['gKNRtSL1pUaTpzMuPMznKw49ILtP6qX3', 'uotbpDiYMURy7SbX2VoJTpyIo9GvZGkr', 'oumX+GaqhVixMUBFIazAgtzfBqCXOg1U']);
+    expect(byAddr(def!.address).legacyBlocks).toEqual([
+      'gKNRtSL1pUaTpzMuPMznKw49ILtP6qX3',
+      'uotbpDiYMURy7SbX2VoJTpyIo9GvZGkr',
+      'oumX+GaqhVixMUBFIazAgtzfBqCXOg1U',
+    ]);
     expect(byAddr(mid!.address).legacyBlocks).toEqual(['Wjvq3/JkRUom0LtTE/uyAa4V7ipvqDyK']);
     expect(st.selectedAccountId).toBe(byAddr(mid!.address).id);
     expect(st.accounts.filter((a) => a.source === 'legacy')).toHaveLength(3);
@@ -228,8 +233,12 @@ describe('keyring', () => {
     const to = st.accounts[1]!.address;
     node.balances.set(from.address, parseXdag('100'));
     node.nonces.set(from.address, 7n);
-    await expect(kr.send({ accountId: from.id, to, amount: parseXdag('1000').toString(), fee: '0', remark: '' })).rejects.toMatchObject({ code: 'insufficient_funds' });
-    await expect(kr.send({ accountId: from.id, to, amount: parseXdag('0.1').toString(), fee: '0', remark: '' })).rejects.toMatchObject({ code: 'amount_below_fee' });
+    await expect(kr.send({ accountId: from.id, to, amount: parseXdag('1000').toString(), fee: '0', remark: '' })).rejects.toMatchObject({
+      code: 'insufficient_funds',
+    });
+    await expect(kr.send({ accountId: from.id, to, amount: parseXdag('0.1').toString(), fee: '0', remark: '' })).rejects.toMatchObject({
+      code: 'amount_below_fee',
+    });
     const res = await kr.send({ accountId: from.id, to, amount: parseXdag('12.5').toString(), fee: parseXdag('0.2').toString(), remark: 'hi' });
     const raw = node.sent.at(-1)!.raw;
     expect(res.blockAddress).toBe(blockAddressOfRaw(raw));
@@ -327,7 +336,11 @@ describe('keyring', () => {
   it('bounds the account index read from a crafted xdagj wallet.data', async () => {
     const { encryptXdagjWallet } = await import('@/core/xdagj-wallet');
     const file = encryptXdagjWallet(
-      { privateKeys: [fromHex(xdagjVectors.walletFiles[0]!.accounts[0]!.privateKey)], mnemonic: xdagjVectors.walletFiles[0]!.mnemonic, nextAccountIndex: 0x7fffffff },
+      {
+        privateKeys: [fromHex(xdagjVectors.walletFiles[0]!.accounts[0]!.privateKey)],
+        mnemonic: xdagjVectors.walletFiles[0]!.mnemonic,
+        nextAccountIndex: 0x7fffffff,
+      },
       'crafted',
     );
     const started = Date.now();
@@ -393,7 +406,12 @@ describe('keyring', () => {
 describe('old address import edge cases', () => {
   const v = legacyVectors[0]!;
   const legacyPreview = (kr: InstanceType<typeof Keyring>) =>
-    kr.previewImport({ kind: 'legacy', walletDat: { name: 'wallet.dat', data: v.walletDat }, dnetKeyDat: { name: 'dnet_key.dat', data: v.dnetKeyDat }, filePassword: v.password });
+    kr.previewImport({
+      kind: 'legacy',
+      walletDat: { name: 'wallet.dat', data: v.walletDat },
+      dnetKeyDat: { name: 'dnet_key.dat', data: v.dnetKeyDat },
+      filePassword: v.password,
+    });
   const many = (n: number, salt: number) => Array.from({ length: n }, (_, i) => encodeLegacyAddress(sha256d(Uint8Array.of(salt, i)).subarray(0, 24)));
 
   it('a rejected first import does not leave an empty wallet behind', async () => {
@@ -428,7 +446,12 @@ describe('old address import edge cases', () => {
     const preview = await legacyPreview(kr); // key #2 exists (previous test), the default key does not
     const [typedOne] = many(1, 3);
     const found = many(1, 2)[0]!; // already attached to key #2
-    await kr.commitImport({ token: preview.token, addresses: [], legacyBlocks: [typedOne!, found], ownedBlocks: [{ block: found, owner: preview.accounts[1]!.address }] });
+    await kr.commitImport({
+      token: preview.token,
+      addresses: [],
+      legacyBlocks: [typedOne!, found],
+      ownedBlocks: [{ block: found, owner: preview.accounts[1]!.address }],
+    });
     const st = await kr.state();
     expect(st.accounts).toHaveLength(1);
     expect(st.accounts[0]!.legacyBlocks).toContain(typedOne);
@@ -458,7 +481,12 @@ describe('wallet without a recovery phrase', () => {
     await session.clear();
     const kr = new Keyring();
     const v = legacyVectors[0]!;
-    const preview = await kr.previewImport({ kind: 'legacy', walletDat: { name: 'wallet.dat', data: v.walletDat }, dnetKeyDat: { name: 'dnet_key.dat', data: v.dnetKeyDat }, filePassword: v.password });
+    const preview = await kr.previewImport({
+      kind: 'legacy',
+      walletDat: { name: 'wallet.dat', data: v.walletDat },
+      dnetKeyDat: { name: 'dnet_key.dat', data: v.dnetKeyDat },
+      filePassword: v.password,
+    });
     await kr.commitImport({ token: preview.token, addresses: preview.accounts.map((a) => a.address), newVaultPassword: PASSWORD });
     let st = await kr.state();
     expect(st.hasMnemonic).toBe(false);
@@ -482,6 +510,58 @@ describe('wallet without a recovery phrase', () => {
     expect(st.accounts.filter((a) => a.source === 'created').map((a) => a.hdIndex)).toEqual([0, 1]);
     await kr.markBackedUp(PASSWORD);
     expect((await kr.state()).needsBackup).toBe(false);
+  });
+});
+
+describe('Sheath backup', () => {
+  it('restores keys, names, old addresses and contacts into a fresh wallet', async () => {
+    const kr = new Keyring();
+    const st = await kr.state();
+    const legacyAcct = st.accounts.find((a) => a.source === 'legacy')!;
+    await kr.setLegacyBlocks(legacyAcct.id, ['gKNRtSL1pUaTpzMuPMznKw49ILtP6qX3']);
+    await kr.renameAccount(legacyAcct.id, '我的旧钱包');
+    await local.set({ contacts: [{ id: 'c1', name: 'Alice', address: addrOf('11'.repeat(32)) }] });
+    const legacyPriv = await kr.exportPrivateKey(legacyAcct.id, PASSWORD);
+    const mnemonic = await kr.exportMnemonic(PASSWORD);
+    await expect(kr.exportBackup('wrong password', 'file-pass-123')).rejects.toMatchObject({ code: 'wrong_password' });
+    await expect(kr.exportBackup(PASSWORD, 'short')).rejects.toMatchObject({ code: 'weak_password' });
+    const before = await kr.state();
+    const { file, count } = await kr.exportBackup(PASSWORD, 'file-pass-123');
+    expect(count).toBe(before.accounts.length);
+    const text = new TextDecoder().decode(fromBase64(file));
+    expect(text).toContain('sheath-wallet-backup');
+    expect(text).not.toContain(legacyAcct.address);
+
+    // a fresh install
+    await local.clear();
+    await session.clear();
+    const fresh = new Keyring();
+    await expect(fresh.previewImport({ kind: 'sheath', file: { name: 'b.dat', data: file }, filePassword: 'nope-nope-nope' })).rejects.toMatchObject({
+      code: 'wrong_file_password',
+    });
+    const preview = await fresh.previewImport({ kind: 'sheath', file: { name: 'b.dat', data: file }, filePassword: 'file-pass-123' });
+    expect(preview.kind).toBe('sheath');
+    expect(preview.accounts.map((a) => a.address)).toEqual(before.accounts.map((a) => a.address));
+    expect(preview.accounts.find((a) => a.address === legacyAcct.address)).toMatchObject({ name: '我的旧钱包', legacyBlocks: 1 });
+    await fresh.commitImport({ token: preview.token, addresses: preview.accounts.map((a) => a.address), newVaultPassword: 'new-pass-1234' });
+    const after = await fresh.state();
+    const shape = (a: (typeof after.accounts)[number]) => [a.address, a.name, a.source, a.hdIndex, a.legacyBlocks];
+    expect(after.accounts.map(shape)).toEqual(before.accounts.map(shape));
+    expect(after.accounts[before.accounts.findIndex((a) => a.id === before.selectedAccountId)]!.id).toBe(after.selectedAccountId);
+    expect(after.hasMnemonic).toBe(true);
+    expect(await fresh.exportMnemonic('new-pass-1234')).toBe(mnemonic);
+    expect(await fresh.exportPrivateKey(after.accounts.find((a) => a.address === legacyAcct.address)!.id, 'new-pass-1234')).toBe(legacyPriv);
+    expect(((await local.get('contacts')) as any).contacts).toMatchObject([{ name: 'Alice' }]);
+
+    // importing the same backup again: nothing new, unless old addresses were lost meanwhile
+    const again = await fresh.previewImport({ kind: 'sheath', file: { name: 'b.dat', data: file }, filePassword: 'file-pass-123' });
+    expect(again.accounts.every((a) => a.alreadyExists)).toBe(true);
+    await expect(fresh.commitImport({ token: again.token, addresses: [] })).rejects.toMatchObject({ code: 'nothing_to_import' });
+    const restoredLegacy = after.accounts.find((a) => a.address === legacyAcct.address)!;
+    await fresh.setLegacyBlocks(restoredLegacy.id, []);
+    const third = await fresh.previewImport({ kind: 'sheath', file: { name: 'b.dat', data: file }, filePassword: 'file-pass-123' });
+    await fresh.commitImport({ token: third.token, addresses: [] });
+    expect((await fresh.state()).accounts.find((a) => a.address === legacyAcct.address)!.legacyBlocks).toEqual(['gKNRtSL1pUaTpzMuPMznKw49ILtP6qX3']);
   });
 });
 

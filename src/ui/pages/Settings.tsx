@@ -74,7 +74,7 @@ const LOCK_OPTIONS = [1, 5, 15, 30, 60, 240, 0];
 
 export function SettingsPage() {
   const s = settings.value;
-  const [sheet, setSheet] = useState<null | 'language' | 'autolock' | 'password' | 'phrase' | 'export' | 'reset'>(null);
+  const [sheet, setSheet] = useState<null | 'language' | 'autolock' | 'password' | 'phrase' | 'export' | 'backup' | 'reset'>(null);
   const [phrase, setPhrase] = useState<string | null>(null);
   const version = chrome.runtime.getManifest().version;
   const update = useUpdateCheck();
@@ -139,7 +139,7 @@ export function SettingsPage() {
         <Row icon="lock" title={t('changePassword')} onClick={() => setSheet('password')} />
         {wallet.value?.hasMnemonic && <Row icon="key" title={t('showPhrase')} onClick={() => setSheet('phrase')} />}
         <Row icon="download" title={t('exportXdagj')} onClick={() => setSheet('export')} />
-        <Row icon="download" title={t('exportAddresses')} subtitle={<span class="wrap">{t('exportAddressesDesc')}</span>} onClick={exportAddressList} />
+        <Row icon="download" title={t('exportBackup')} subtitle={<span class="wrap">{t('exportBackupDesc')}</span>} onClick={() => setSheet('backup')} />
         <Row icon="lock" title={t('lockNow')} onClick={async () => applyState(await call('lock'))} />
       </div>
 
@@ -225,7 +225,22 @@ export function SettingsPage() {
           </div>
         )}
       </Sheet>
-      <ExportSheet open={sheet === 'export'} onClose={() => setSheet(null)} />
+      <FileExportSheet
+        open={sheet === 'export'}
+        onClose={() => setSheet(null)}
+        title={t('exportXdagj')}
+        desc={t('exportXdagjDesc')}
+        filename={() => 'wallet.data'}
+        run={(password, filePassword) => call('exportXdagjWallet', { password, filePassword })}
+      />
+      <FileExportSheet
+        open={sheet === 'backup'}
+        onClose={() => setSheet(null)}
+        title={t('exportBackup')}
+        desc={t('backupSheetDesc')}
+        filename={() => `sheath-wallet-${localDay()}.dat`}
+        run={(password, filePassword) => call('exportBackup', { password, filePassword })}
+      />
       <PasswordSheet
         open={sheet === 'reset'}
         danger
@@ -290,25 +305,9 @@ function ChangePasswordSheet({ open, onClose }: { open: boolean; onClose: () => 
   );
 }
 
-/**
- * A plain-text list of every account with its address and its 2018 old block addresses. Public
- * information only: xdagj's wallet.data format holds keys and cannot carry the old addresses.
- */
-function exportAddressList() {
-  const accounts = wallet.value?.accounts ?? [];
+function localDay(): string {
   const d = new Date();
-  const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; // local date
-  const lines = [`Sheath — ${t('exportAddresses')} — ${day}`, t('exportAddressesDesc'), ''];
-  for (const a of accounts) {
-    lines.push(`${a.name} (${t(`source_${a.source}` as MessageKey)})`, `  ${t('address')}: ${a.address}`);
-    if (a.legacyBlocks.length) {
-      lines.push(`  ${t('legacyBlocksLabel')}:`);
-      for (const b of a.legacyBlocks) lines.push(`    ${b}`);
-    }
-    lines.push('');
-  }
-  download('sheath-addresses.txt', new TextEncoder().encode(lines.join('\n')));
-  toast(t('exportDone', { n: accounts.length }), 'success');
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 function download(name: string, bytes: Uint8Array) {
@@ -326,7 +325,22 @@ function download(name: string, bytes: Uint8Array) {
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
-function ExportSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+/** Password-protected file export: the wallet password authorises it, a separate password seals the file. */
+function FileExportSheet({
+  open,
+  onClose,
+  title,
+  desc,
+  filename,
+  run,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  desc: string;
+  filename: () => string;
+  run: (password: string, filePassword: string) => Promise<{ file: string; count: number }>;
+}) {
   const [pw, setPw] = useState('');
   const [filePw, setFilePw] = useState('');
   const [filePw2, setFilePw2] = useState('');
@@ -338,9 +352,9 @@ function ExportSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
   }, [open]);
   const ok = pw && filePw.length >= 8 && filePw === filePw2;
   return (
-    <Sheet open={open} onClose={onClose} title={t('exportXdagj')}>
+    <Sheet open={open} onClose={onClose} title={title}>
       <div class="stack">
-        <p class="muted small">{t('exportXdagjDesc')}</p>
+        <p class="muted small">{desc}</p>
         <PasswordField label={t('currentPassword')} value={pw} onValue={setPw} autoFocus />
         <PasswordField label={t('exportFilePassword')} value={filePw} onValue={setFilePw} error={filePw && filePw.length < 8 ? t('passwordTooShort') : null} />
         <PasswordField label={t('confirmPassword')} value={filePw2} onValue={setFilePw2} error={filePw2 && filePw !== filePw2 ? t('passwordMismatch') : null} />
@@ -354,11 +368,8 @@ function ExportSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
             setBusy(true);
             setErr(null);
             try {
-              const res = await call('exportXdagjWallet', {
-                password: pw,
-                filePassword: filePw,
-              });
-              download('wallet.data', fromBase64(res.file));
+              const res = await run(pw, filePw);
+              download(filename(), fromBase64(res.file));
               toast(t('exportDone', { n: res.count }), 'success');
               onClose();
             } catch (e) {
@@ -368,7 +379,7 @@ function ExportSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
             }
           }}
         >
-          {t('exportXdagj')}
+          {title}
         </Button>
       </div>
     </Sheet>

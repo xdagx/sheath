@@ -84,6 +84,10 @@ export interface WalletState {
 
 export interface ImportPreviewAccount {
   address: string;
+  /** account name carried by a Sheath backup */
+  name?: string;
+  /** number of 2018 old addresses carried by a Sheath backup */
+  legacyBlocks?: number;
   /** compressed public key (hex), used to recognise the account's old blocks */
   publicKey: string;
   /** index in the imported file, for display */
@@ -94,7 +98,7 @@ export interface ImportPreviewAccount {
 
 export interface ImportPreview {
   token: string;
-  kind: 'xdagj' | 'legacy' | 'mnemonic' | 'privateKey';
+  kind: 'xdagj' | 'legacy' | 'mnemonic' | 'privateKey' | 'sheath';
   accounts: ImportPreviewAccount[];
   hasMnemonic: boolean;
   passwordVerified: boolean;

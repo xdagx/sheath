@@ -4,6 +4,7 @@ import { isLegacyAddress } from '@/core/address';
 import { toBase64 } from '@/core/bytes';
 import { checkMnemonic, normalizeMnemonic } from '@/core/keys';
 import type { OwnedBlock } from '@/core/legacy/storage';
+import { looksLikeSheathBackup } from '@/core/backup';
 import { looksLikeXdagjWallet } from '@/core/xdagj-wallet';
 import { explorerLink } from '@/shared/networks';
 import { MAX_LEGACY_BLOCKS, type ImportPreview } from '@/shared/types';
@@ -71,7 +72,9 @@ export function ImportPage() {
   const mCheck = useMemo(() => (words.length >= 12 ? checkMnemonic(mnemonic) : null), [mnemonic]);
   const needsFullPage = isPopup() && (tab === 'xdagj' || tab === 'legacy');
 
-  const xfileWarning = xfile && !looksLikeXdagjWallet(xfile.bytes) ? (xfile.bytes.length % 32 === 0 ? t('looksLikeLegacy') : t('notXdagjFile')) : null;
+  const isBackup = !!xfile && looksLikeSheathBackup(xfile.bytes);
+  const xfileWarning =
+    xfile && !isBackup && !looksLikeXdagjWallet(xfile.bytes) ? (xfile.bytes.length % 32 === 0 ? t('looksLikeLegacy') : t('notXdagjFile')) : null;
 
   const canSubmit =
     !busy &&
@@ -108,7 +111,7 @@ export function ImportPage() {
               })
             : tab === 'xdagj'
               ? await call('previewImport', {
-                  kind: 'xdagj',
+                  kind: isBackup ? 'sheath' : 'xdagj',
                   file: file(xfile!),
                   filePassword: filePw,
                 })
@@ -190,7 +193,7 @@ export function ImportPage() {
         options={[
           { value: 'mnemonic', label: t('tabMnemonic') },
           { value: 'privateKey', label: t('tabPrivateKey') },
-          { value: 'xdagj', label: t('tabXdagj') },
+          { value: 'xdagj', label: t('tabWalletFile') },
           { value: 'legacy', label: t('tabLegacy') },
         ]}
       />
@@ -221,8 +224,8 @@ export function ImportPage() {
         )}
         {tab === 'xdagj' && !needsFullPage && (
           <>
-            <p class="muted small">{t('xdagjDesc')}</p>
-            <FileDrop label={t('xdagjFileLabel')} file={xfile} onFile={setXfile} />
+            <p class="muted small">{t('walletFileDesc')}</p>
+            <FileDrop label={t('walletFileLabel')} file={xfile} onFile={setXfile} />
             {xfileWarning && <Notice kind="warning">{xfileWarning}</Notice>}
             <PasswordField label={t('filePassword')} value={filePw} onValue={setFilePw} onEnter={submit} />
           </>
@@ -266,7 +269,7 @@ export function ImportPage() {
         {needsFullPage && (
           <div class="fullpage-hint">
             <Icon name="file" size={28} />
-            <p>{tab === 'xdagj' ? t('xdagjDesc') : t('legacyDesc')}</p>
+            <p>{tab === 'xdagj' ? t('walletFileDesc') : t('legacyDesc')}</p>
           </div>
         )}
         {error && <Notice kind="danger">{error}</Notice>}
@@ -565,9 +568,11 @@ export function ImportPreviewPage() {
               <input type="checkbox" checked={on} disabled={disabled} onChange={() => toggleAccount(a.address, on)} />
               <Identicon address={a.address} size={34} />
               <span class="select-main">
+                {a.name && <span class="account-item-name">{a.name}</span>}
                 <FullAddress address={a.address} />
                 <span class="row-sub">
                   {a.hdIndex !== undefined ? t('hdIndex', { n: a.hdIndex }) : preview.kind === 'legacy' && a.index === 0 ? t('defaultKey') : `#${a.index + 1}`}
+                  {a.legacyBlocks ? ` · ${t('oldAddressesCount', { n: a.legacyBlocks })}` : ''}
                   {disabled && ` · ${t('alreadyAdded')}`}
                 </span>
               </span>

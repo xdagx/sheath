@@ -30,6 +30,7 @@ export interface RequestMap {
     | { kind: 'mnemonic'; mnemonic: string; count: number; allowBadChecksum?: boolean }
     | { kind: 'privateKey'; privateKey: string }
     | { kind: 'xdagj'; file: FilePayload; filePassword: string }
+    | { kind: 'sheath'; file: FilePayload; filePassword: string }
     | { kind: 'legacy'; walletDat: FilePayload; dnetKeyDat: FilePayload | null; filePassword: string },
     ImportPreview,
   ];
@@ -57,6 +58,8 @@ export interface RequestMap {
   exportPrivateKey: [{ id: string; password: string }, { privateKey: string }];
   exportMnemonic: [{ password: string; keyringId?: string }, { mnemonic: string }];
   exportXdagjWallet: [{ password: string; filePassword: string }, { file: string; count: number }];
+  /** Sheath's own encrypted backup: keys, account names, 2018 old addresses and the address book. */
+  exportBackup: [{ password: string; filePassword: string }, { file: string; count: number }];
 
   send: [{ accountId: string; to: string; amount: string; fee: string; remark: string }, SendResult];
   sendLegacy: [{ accountId: string; fromBlock: string; to: string; amount: string; remark: string }, SendResult];

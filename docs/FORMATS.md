@@ -102,7 +102,27 @@ Legacy transfer: `header, IN, OUTPUT, [REMARK], PUBKEY, SIG, SIG` (no nonce, fee
 * Signature: RFC 6979 ECDSA, low-S, over `SHA256d(block with signature fields zeroed ‖ compressedPubKey)`.
 * Block address returned by `xdag_sendRawTransaction`: `Base64(SHA256d(block)[0..24])`.
 
-## 5. RPC methods used
+## 5. Sheath backup file (`sheath-wallet-<date>.dat`)
+
+The wallet's own backup, the only export that carries everything: recovery phrases and private
+keys, account names, each account's 2018 old block addresses, and the address book. UTF-8 JSON:
+
+```json
+{ "format": "sheath-wallet-backup", "version": 1, "createdAt": 1700000000000, "app": "Sheath 1.5.0",
+  "vault": { "v": 1, "kdf": { "name": "PBKDF2", "hash": "SHA-256", "iterations": 600000, "salt": "…" },
+             "cipher": "AES-GCM", "iv": "…", "data": "…" } }
+```
+
+`vault` is sealed exactly like the vault at rest (PBKDF2-HMAC-SHA256, 600 000 iterations, 16-byte
+salt → AES-256-GCM, 12-byte IV) with a password chosen for the file (≥ 8 characters). The
+plaintext is `{ version: 1, createdAt, keyrings, accounts, selectedAccountId, contacts }` with the
+vault's own `Keyring` / `Account` / `Contact` records. On import every account address is recomputed
+from its key and the file is rejected on any mismatch; old addresses are validated and capped at
+50 per account; accounts that already exist only receive missing old addresses; unknown contacts
+are added. The file is detected by its `format` marker on the "Wallet file" tab, next to xdagj's
+`wallet.data`.
+
+## 6. RPC methods used
 
 `xdag_getBalance`, `xdag_getTransactionNonce`, `xdag_getAverageFee`, `xdag_sendRawTransaction`,
 `xdag_getBlockByHash(address, page, pageSize)`, `xdag_netType`, `xdag_blockNumber`

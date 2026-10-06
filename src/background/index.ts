@@ -124,6 +124,7 @@ const handlers: Handlers = {
   exportPrivateKey: async ({ id, password }) => ({ privateKey: await keyring.exportPrivateKey(id, password) }),
   exportMnemonic: async ({ password, keyringId }) => ({ mnemonic: await keyring.exportMnemonic(password, keyringId) }),
   exportXdagjWallet: ({ password, filePassword }) => keyring.exportXdagjWallet(password, filePassword),
+  exportBackup: ({ password, filePassword }) => keyring.exportBackup(password, filePassword),
   send: (p) => keyring.send(p),
   sendLegacy: (p) => keyring.sendLegacy(p),
   getSettings: () => loadSettings(),

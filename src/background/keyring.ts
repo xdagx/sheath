@@ -5,17 +5,9 @@
  */
 import { isLegacyAddress, isValidAddress, publicKeyToAddress } from '@/core/address';
 import { MAX_NANO, MIN_FEE_NANO, formatXdag } from '@/core/amount';
+import { BackupFormatError, BackupPasswordError, decryptBackup, encryptBackup, type BackupPayload } from '@/core/backup';
 import { fromBase64, fromHex, randomBytes, toBase64, toHex, wipe } from '@/core/bytes';
-import {
-  checkMnemonic,
-  deriveHdKey,
-  generateMnemonic,
-  getPublicKey,
-  isValidPrivateKey,
-  mnemonicToSeed,
-  normalizeMnemonic,
-  parsePrivateKey,
-} from '@/core/keys';
+import { checkMnemonic, deriveHdKey, generateMnemonic, getPublicKey, isValidPrivateKey, mnemonicToSeed, normalizeMnemonic, parsePrivateKey } from '@/core/keys';
 import { decryptLegacyWallet } from '@/core/legacy/wallet';
 import { RpcError, XdagRpc } from '@/core/rpc';
 import { buildAccountTransfer, buildLegacyTransfer, isValidRemark, totalFee } from '@/core/tx';
@@ -23,14 +15,17 @@ import { EncryptedVault, VAULT_KDF_ITERATIONS, deriveVaultKey, keyFromPassword, 
 import { decryptXdagjWallet, encryptXdagjWallet, InvalidFileError, WrongPasswordError } from '@/core/xdagj-wallet';
 import type { RequestOf } from '@/shared/messages';
 import { currentNetwork } from '@/shared/networks';
-import type { Account, AccountSource, ImportPreview, Keyring as KeyringEntry, PendingTx, SendResult, VaultData, WalletState } from '@/shared/types';
+import type { Account, AccountSource, Contact, ImportPreview, Keyring as KeyringEntry, PendingTx, SendResult, VaultData, WalletState } from '@/shared/types';
 import { MAX_LEGACY_BLOCKS } from '@/shared/types';
 
 type HdKeyring = Extract<KeyringEntry, { type: 'hd' }>;
 import { clearSession, getLocal, getSession, loadSettings, removeLocal, setLocal, setSession } from './store';
 
 export class WalletError extends Error {
-  constructor(readonly code: string, message?: string) {
+  constructor(
+    readonly code: string,
+    message?: string,
+  ) {
     super(message ?? code);
     this.name = 'WalletError';
   }
@@ -38,9 +33,11 @@ export class WalletError extends Error {
 
 interface StagedImport {
   kind: ImportPreview['kind'];
-  keys: { priv: Uint8Array; address: string; hdIndex?: number }[];
+  keys: { priv: Uint8Array; address: string; hdIndex?: number; name?: string; legacyBlocks?: string[] }[];
   mnemonic?: string;
   nextIndex?: number;
+  /** a Sheath backup: restored as a whole by restoreBackup() */
+  backup?: BackupPayload;
   createdAt: number;
 }
 
@@ -364,14 +361,44 @@ export class Keyring {
         }
         break;
       }
+      case 'sheath': {
+        let backup: BackupPayload;
+        try {
+          backup = await decryptBackup(fromBase64(req.file.data), req.filePassword);
+        } catch (e) {
+          if (e instanceof BackupPasswordError) throw new WalletError('wrong_file_password');
+          if (e instanceof BackupFormatError) throw new WalletError('invalid_file', e.message);
+          throw e;
+        }
+        const seeds = new Map<string, Uint8Array>();
+        try {
+          for (const a of backup.accounts) {
+            const kr = backup.keyrings.find((k) => k.id === a.keyringId)!;
+            let priv: Uint8Array;
+            if (kr.type === 'hd') {
+              if (!seeds.has(kr.id)) seeds.set(kr.id, mnemonicToSeed(kr.mnemonic));
+              priv = deriveHdKey(seeds.get(kr.id)!, a.hdIndex!);
+            } else {
+              priv = fromHex(kr.privateKey);
+            }
+            staged.keys.push({
+              priv,
+              address: a.address,
+              ...(a.hdIndex !== undefined ? { hdIndex: a.hdIndex } : {}),
+              name: a.name,
+              legacyBlocks: a.legacyBlocks,
+            });
+          }
+        } finally {
+          for (const s of seeds.values()) wipe(s);
+        }
+        staged.backup = backup;
+        break;
+      }
       case 'legacy': {
         let res;
         try {
-          res = decryptLegacyWallet(
-            fromBase64(req.walletDat.data),
-            req.dnetKeyDat ? fromBase64(req.dnetKeyDat.data) : null,
-            req.filePassword,
-          );
+          res = decryptLegacyWallet(fromBase64(req.walletDat.data), req.dnetKeyDat ? fromBase64(req.dnetKeyDat.data) : null, req.filePassword);
         } catch (e) {
           if (e instanceof WrongPasswordError) throw new WalletError('wrong_file_password');
           if (e instanceof InvalidFileError) throw new WalletError('invalid_file', e.message);
@@ -404,6 +431,8 @@ export class Keyring {
         address: k.address,
         publicKey: toHex(getPublicKey(k.priv)),
         index,
+        ...(k.name !== undefined ? { name: k.name } : {}),
+        ...(k.legacyBlocks ? { legacyBlocks: k.legacyBlocks.length } : {}),
         alreadyExists: existing.has(k.address),
         ...(k.hdIndex !== undefined ? { hdIndex: k.hdIndex } : {}),
       })),
@@ -420,6 +449,7 @@ export class Keyring {
     return this.vaultMutex.run(async () => {
       const staged = this.staged.get(req.token);
       if (!staged) throw new WalletError('import_expired');
+      if (staged.backup) return this.restoreBackup(staged.backup, req);
       const initialized = await this.isInitialized();
       const settings = await loadSettings();
       const current = initialized ? await this.requireUnlocked() : null;
@@ -437,7 +467,9 @@ export class Keyring {
         owned.set(o.owner, [...new Set([...(owned.get(o.owner) ?? []), block])]);
       }
       const found = new Set([...owned.values()].flat());
-      const typed = [...new Set((req.legacyBlocks ?? []).map((b) => (typeof b === 'string' ? b.trim() : '')).filter(isLegacyAddress))].filter((b) => !found.has(b));
+      const typed = [...new Set((req.legacyBlocks ?? []).map((b) => (typeof b === 'string' ? b.trim() : '')).filter(isLegacyAddress))].filter(
+        (b) => !found.has(b),
+      );
       const typedOwner = chosen[0]?.address ?? staged.keys.find((k) => known.has(k.address))?.address ?? null;
       if (typed.length) {
         if (!typedOwner) throw new WalletError('nothing_to_import');
@@ -461,7 +493,7 @@ export class Keyring {
       const vault = await this.requireUnlocked();
 
       const groupId = newId();
-      const source: AccountSource = staged.kind === 'mnemonic' ? 'mnemonic' : staged.kind;
+      const source: AccountSource = staged.kind === 'sheath' ? 'privateKey' : staged.kind; // a backup never gets here (restoreBackup)
       let hdKeyring: HdKeyring | undefined;
       if (staged.mnemonic) {
         hdKeyring = vault.keyrings.find((k): k is HdKeyring => k.type === 'hd' && k.mnemonic === staged.mnemonic);
@@ -505,6 +537,98 @@ export class Keyring {
       this.cancelImport(req.token);
       await this.persist();
     });
+  }
+
+  /**
+   * Restores the chosen accounts of a Sheath backup with their keys, names, old addresses and
+   * group, merges old addresses into accounts that already exist, and adds unknown contacts.
+   * Runs under the vault mutex (called from commitImport).
+   */
+  private async restoreBackup(backup: BackupPayload, req: RequestOf<'commitImport'>): Promise<void> {
+    const initialized = await this.isInitialized();
+    const current = initialized ? await this.requireUnlocked() : null;
+    const known = new Map((current?.accounts ?? []).map((a) => [a.address, a] as const));
+    const wanted = new Set(req.addresses);
+    const chosen = backup.accounts.filter((a) => wanted.has(a.address) && !known.has(a.address));
+    const mergeInto = backup.accounts.filter((a) => known.has(a.address) && a.legacyBlocks.some((b) => !known.get(a.address)!.legacyBlocks.includes(b)));
+    if (!chosen.length && !mergeInto.length) throw new WalletError('nothing_to_import');
+    for (const a of mergeInto) {
+      if (new Set([...known.get(a.address)!.legacyBlocks, ...a.legacyBlocks]).size > MAX_LEGACY_BLOCKS)
+        throw new WalletError('too_many_blocks', String(MAX_LEGACY_BLOCKS));
+    }
+    if (!initialized) {
+      if (!req.newVaultPassword) throw new WalletError('weak_password');
+      await this.createStorage(req.newVaultPassword, { version: 1, keyrings: [], accounts: [], selectedAccountId: null });
+    }
+    const vault = await this.requireUnlocked();
+
+    const keyringIds = new Map<string, string>(); // backup keyring id -> vault keyring id
+    const groupIds = new Map<string, string>();
+    let selected: string | null = null;
+    for (const a of chosen) {
+      const src = backup.keyrings.find((k) => k.id === a.keyringId)!;
+      let id = keyringIds.get(src.id);
+      if (!id) {
+        const existing =
+          src.type === 'hd'
+            ? vault.keyrings.find((k): k is HdKeyring => k.type === 'hd' && k.mnemonic === src.mnemonic)
+            : vault.keyrings.find((k) => k.type === 'key' && k.privateKey === src.privateKey);
+        if (existing) {
+          id = existing.id;
+          if (existing.type === 'hd' && src.type === 'hd') {
+            existing.nextIndex = Math.max(existing.nextIndex, src.nextIndex);
+            existing.backedUp = existing.backedUp || src.backedUp;
+          }
+        } else {
+          id = newId();
+          vault.keyrings.push({ ...src, id });
+        }
+        keyringIds.set(src.id, id);
+      }
+      const kr = vault.keyrings.find((k) => k.id === id)!;
+      if (kr.type === 'hd' && a.hdIndex !== undefined) kr.nextIndex = Math.max(kr.nextIndex, a.hdIndex + 1);
+      let groupId = groupIds.get(a.groupId);
+      if (!groupId) {
+        groupId = newId();
+        groupIds.set(a.groupId, groupId);
+      }
+      const account: Account = { ...a, id: newId(), keyringId: id, groupId, createdAt: a.createdAt || Date.now() };
+      vault.accounts.push(account);
+      if (a.id === backup.selectedAccountId || !selected) selected = account.id;
+    }
+    for (const a of mergeInto) {
+      const acct = vault.accounts.find((x) => x.address === a.address)!;
+      acct.legacyBlocks = [...new Set([...acct.legacyBlocks, ...a.legacyBlocks])];
+    }
+    vault.selectedAccountId = selected ?? vault.selectedAccountId ?? vault.accounts[0]?.id ?? null;
+
+    const contacts: Contact[] = (await getLocal('contacts')) ?? [];
+    const have = new Set(contacts.map((c) => c.address));
+    const added = backup.contacts.filter((c) => !have.has(c.address) && !contacts.some((x) => x.id === c.id));
+    if (added.length)
+      await setLocal(
+        'contacts',
+        [...contacts, ...added].sort((a, b) => a.name.localeCompare(b.name)),
+      );
+
+    this.cancelImport(req.token);
+    await this.persist();
+  }
+
+  /** Sheath's own encrypted backup of the whole wallet (see core/backup.ts). */
+  async exportBackup(password: string, filePassword: string): Promise<{ file: string; count: number }> {
+    await this.verifyPassword(password);
+    const vault = await this.requireUnlocked();
+    if (typeof filePassword !== 'string' || filePassword.length < PASSWORD_MIN) throw new WalletError('weak_password');
+    const contacts = (await getLocal('contacts')) ?? [];
+    const app =
+      `Sheath ${(globalThis as { chrome?: { runtime?: { getManifest?: () => { version?: string } } } }).chrome?.runtime?.getManifest?.()?.version ?? ''}`.trim();
+    const file = await encryptBackup(
+      { version: 1, createdAt: Date.now(), keyrings: vault.keyrings, accounts: vault.accounts, selectedAccountId: vault.selectedAccountId, contacts },
+      filePassword,
+      app,
+    );
+    return { file: toBase64(file), count: vault.accounts.length };
   }
 
   // ---------------------------------------------------------------- accounts

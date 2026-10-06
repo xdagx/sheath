@@ -323,6 +323,47 @@ try {
   assert.equal(exported.readInt32BE(0), 4);
   step(`exported wallet.data (${exported.length} bytes)`);
 
+  step('export a Sheath backup and restore it in a fresh profile');
+  await page.goto(`${base}/app.html#/accounts`);
+  await page.locator('.account-item').first().waitFor();
+  const accountsTotal = await page.locator('.account-item').count();
+  await page.goto(`${base}/app.html#/settings`);
+  await page.getByText('导出 Sheath 钱包备份').click();
+  const [backupDl] = await Promise.all([
+    page.waitForEvent('download'),
+    (async () => {
+      await page.getByLabel('当前密码').fill(PASSWORD);
+      await page.getByLabel('文件密码').fill('backup-pass-1');
+      await page.getByLabel('确认密码').fill('backup-pass-1');
+      await page.locator('.sheet .btn-primary').click();
+    })(),
+  ]);
+  const backupFile = join(work, 'sheath-wallet.dat');
+  cpSync(await backupDl.path(), backupFile);
+  assert.ok(readFileSync(backupFile, 'utf8').includes('sheath-wallet-backup'));
+  {
+    const r = await launch('restore');
+    await r.page.goto(`${r.base}/app.html#/welcome`);
+    await r.page.getByText('Import a wallet').click();
+    await r.page.getByLabel('New password').fill(PASSWORD);
+    await r.page.getByLabel('Confirm password').fill(PASSWORD);
+    await r.page.locator('.checkbox').click();
+    await r.page.getByRole('button', { name: 'Continue' }).click();
+    await r.page.getByRole('tab', { name: 'Wallet file' }).click();
+    await r.page.locator('input[type=file]').setInputFiles(backupFile);
+    await r.page.getByLabel('Wallet file password').fill('backup-pass-1');
+    await r.page.getByRole('button', { name: 'Continue' }).click();
+    await r.page.getByText('Select accounts').waitFor();
+    assert.equal(await r.page.locator('.select-row').count(), accountsTotal);
+    await r.page.locator('.select-row', { hasText: 'Legacy 1' }).waitFor();
+    await r.page.getByText(new RegExp(`Import ${accountsTotal} account`)).click();
+    await r.page.locator('.balance-card').waitFor();
+    await r.page.locator('.account-chip').click();
+    await r.page.locator('.account-item', { hasText: 'Legacy 1' }).locator('.account-item-name').click();
+    await r.page.locator('.legacy-row', { hasText: OLD_BLOCK.slice(0, 8) }).waitFor();
+    await r.ctx.close();
+  }
+
   step('wallet built from imported keys only: "Create account" creates a recovery phrase');
   await page.goto(`${base}/app.html#/home`);
   await page.locator('.account-chip').click();
