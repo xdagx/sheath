@@ -286,6 +286,13 @@ try {
   await popup.locator('.account-chip').click();
   await popup.waitForTimeout(500);
   if (SHOTS) await popup.screenshot({ path: join(SHOTS, '16-popup-accounts-dark.png') });
+  // keyboard: activating the copy button of another account must not switch accounts or close the sheet
+  const chipBefore = await popup.locator('.account-chip').innerText();
+  await popup.locator('.account-item:not(.selected) .copy-btn').first().focus();
+  await popup.keyboard.press('Enter');
+  await popup.waitForTimeout(300);
+  assert.ok((await popup.locator('.account-item').count()) > 0, 'sheet still open');
+  assert.equal(await popup.locator('.account-chip').innerText(), chipBefore);
   await popup.keyboard.press('Escape');
   await popup.goto(`${base}/popup.html#/send`);
   await popup.getByLabel('Amount').waitFor();

@@ -1,11 +1,11 @@
-import { useEffect, useState } from "preact/hooks";
-import { isLegacyAddress, isValidAddress } from "@/core/address";
-import { fromBase64 } from "@/core/bytes";
-import { XdagRpc } from "@/core/rpc";
-import type { NetworkKind } from "@/core/tx";
-import { allNetworks, originPattern, validateNodeUrl } from "@/shared/networks";
-import type { Contact, NetworkConfig, Settings } from "@/shared/types";
-import { call, openExternal } from "../api";
+import { useEffect, useState } from 'preact/hooks';
+import { isLegacyAddress, isValidAddress } from '@/core/address';
+import { fromBase64 } from '@/core/bytes';
+import { XdagRpc } from '@/core/rpc';
+import type { NetworkKind } from '@/core/tx';
+import { allNetworks, originPattern, validateNodeUrl } from '@/shared/networks';
+import type { Contact, NetworkConfig, Settings } from '@/shared/types';
+import { call, openExternal } from '../api';
 import {
   Button,
   CopyButton,
@@ -21,27 +21,15 @@ import {
   Spinner,
   TextField,
   Toggle,
-} from "../components";
-import { middle } from "../format";
-import { Icon } from "../icons";
-import { errorText, networkLabel, t, type MessageKey } from "../i18n";
-import { navigate } from "../router";
-import {
-  applySettings,
-  applyState,
-  clearLocalCaches,
-  contacts,
-  describeError,
-  loadContacts,
-  network,
-  settings,
-  toast,
-  toastError,
-  wallet,
-} from "../state";
-import { PasswordSheet } from "./Accounts";
+} from '../components';
+import { middle } from '../format';
+import { Icon } from '../icons';
+import { errorText, networkLabel, t, type MessageKey } from '../i18n';
+import { navigate } from '../router';
+import { applySettings, applyState, clearLocalCaches, contacts, describeError, loadContacts, network, settings, toast, toastError, wallet } from '../state';
+import { PasswordSheet } from './Accounts';
 
-const RELEASES_URL = "https://github.com/xdagx/sheath/releases";
+const RELEASES_URL = 'https://github.com/xdagx/sheath/releases';
 
 /**
  * "Check for updates". A Chrome Web Store install (its manifest gets an update_url) is updated by
@@ -49,7 +37,7 @@ const RELEASES_URL = "https://github.com/xdagx/sheath/releases";
  * files (and downloading code is not allowed), so it opens the download page instead.
  */
 function useUpdateCheck() {
-  const fromStore = "update_url" in chrome.runtime.getManifest();
+  const fromStore = 'update_url' in chrome.runtime.getManifest();
   const [checking, setChecking] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -61,13 +49,9 @@ function useUpdateCheck() {
     setChecking(true);
     try {
       const r = await chrome.runtime.requestUpdateCheck();
-      setReady(r.status === "update_available");
+      setReady(r.status === 'update_available');
       setMessage(
-        r.status === "update_available"
-          ? t("updateAvailable", { v: r.version ?? "" })
-          : r.status === "no_update"
-            ? t("upToDate")
-            : t("updateThrottled"),
+        r.status === 'update_available' ? t('updateAvailable', { v: r.version ?? '' }) : r.status === 'no_update' ? t('upToDate') : t('updateThrottled'),
       );
     } catch (e) {
       toastError(e);
@@ -80,7 +64,7 @@ function useUpdateCheck() {
 
 async function patch(p: Partial<Settings>) {
   try {
-    applySettings(await call("updateSettings", { patch: p }));
+    applySettings(await call('updateSettings', { patch: p }));
   } catch (e) {
     toastError(e);
   }
@@ -90,264 +74,142 @@ const LOCK_OPTIONS = [1, 5, 15, 30, 60, 240, 0];
 
 export function SettingsPage() {
   const s = settings.value;
-  const [sheet, setSheet] = useState<
-    null | "language" | "autolock" | "password" | "phrase" | "export" | "reset"
-  >(null);
+  const [sheet, setSheet] = useState<null | 'language' | 'autolock' | 'password' | 'phrase' | 'export' | 'reset'>(null);
   const [phrase, setPhrase] = useState<string | null>(null);
   const version = chrome.runtime.getManifest().version;
   const update = useUpdateCheck();
-  const lockLabel = (m: number) =>
-    m === 0
-      ? t("autoLockNever")
-      : m >= 60
-        ? t("hours", { n: m / 60 })
-        : t("minutes", { n: m });
+  const lockLabel = (m: number) => (m === 0 ? t('autoLockNever') : m >= 60 ? t('hours', { n: m / 60 }) : t('minutes', { n: m }));
   return (
-    <Page title={t("settingsTitle")}>
+    <Page title={t('settingsTitle')}>
       <div class="section-head">
-        <h3>{t("general")}</h3>
+        <h3>{t('general')}</h3>
       </div>
       <div class="card list-card">
         <Row
           icon="globe"
-          title={t("language")}
-          onClick={() => setSheet("language")}
-          right={
-            <span class="muted">
-              {s.language === "auto"
-                ? t("languageAuto")
-                : s.language === "zh-CN"
-                  ? "简体中文"
-                  : "English"}
-            </span>
-          }
+          title={t('language')}
+          onClick={() => setSheet('language')}
+          right={<span class="muted">{s.language === 'auto' ? t('languageAuto') : s.language === 'zh-CN' ? '简体中文' : 'English'}</span>}
         />
         <div class="row">
           <span class="row-icon">
             <Icon name="sun" size={18} />
           </span>
           <span class="row-main">
-            <span class="row-title">{t("theme")}</span>
+            <span class="row-title">{t('theme')}</span>
           </span>
           <span class="row-right compact-seg">
             <Segmented
               value={s.theme}
               onChange={(v) => patch({ theme: v })}
               options={[
-                { value: "system", label: t("themeSystem") },
-                { value: "dark", label: t("themeDark") },
-                { value: "light", label: t("themeLight") },
+                { value: 'system', label: t('themeSystem') },
+                { value: 'dark', label: t('themeDark') },
+                { value: 'light', label: t('themeLight') },
               ]}
             />
           </span>
         </div>
         <Row
           icon="eyeOff"
-          title={t("hideBalance")}
-          right={
-            <Toggle
-              checked={s.hideBalance}
-              onChange={(v) => patch({ hideBalance: v })}
-              label={t("hideBalance")}
-            />
-          }
+          title={t('hideBalance')}
+          right={<Toggle checked={s.hideBalance} onChange={(v) => patch({ hideBalance: v })} label={t('hideBalance')} />}
         />
       </div>
 
       <div class="section-head">
-        <h3>{t("network")}</h3>
+        <h3>{t('network')}</h3>
       </div>
       <div class="card list-card">
         <Row
           icon="link"
-          title={t("networks")}
+          title={t('networks')}
           subtitle={network.value.rpcUrl}
-          onClick={() => navigate("/settings/networks")}
-          right={
-            <span class={`net-dot net-${network.value.kind}`}>
-              {networkLabel(network.value)}
-            </span>
-          }
+          onClick={() => navigate('/settings/networks')}
+          right={<span class={`net-dot net-${network.value.kind}`}>{networkLabel(network.value)}</span>}
         />
-        <Row
-          icon="users"
-          title={t("addressBook")}
-          onClick={() => navigate("/settings/contacts")}
-        />
+        <Row icon="users" title={t('addressBook')} onClick={() => navigate('/settings/contacts')} />
       </div>
 
       <div class="section-head">
-        <h3>{t("security")}</h3>
+        <h3>{t('security')}</h3>
       </div>
       <div class="card list-card">
-        <Row
-          icon="clock"
-          title={t("autoLock")}
-          onClick={() => setSheet("autolock")}
-          right={<span class="muted">{lockLabel(s.autoLockMinutes)}</span>}
-        />
-        <Row
-          icon="lock"
-          title={t("changePassword")}
-          onClick={() => setSheet("password")}
-        />
-        {wallet.value?.hasMnemonic && (
-          <Row
-            icon="key"
-            title={t("showPhrase")}
-            onClick={() => setSheet("phrase")}
-          />
-        )}
-        <Row
-          icon="download"
-          title={t("exportXdagj")}
-          onClick={() => setSheet("export")}
-        />
-        <Row
-          icon="download"
-          title={t("exportAddresses")}
-          subtitle={<span class="wrap">{t("exportAddressesDesc")}</span>}
-          onClick={exportAddressList}
-        />
-        <Row
-          icon="lock"
-          title={t("lockNow")}
-          onClick={async () => applyState(await call("lock"))}
-        />
+        <Row icon="clock" title={t('autoLock')} onClick={() => setSheet('autolock')} right={<span class="muted">{lockLabel(s.autoLockMinutes)}</span>} />
+        <Row icon="lock" title={t('changePassword')} onClick={() => setSheet('password')} />
+        {wallet.value?.hasMnemonic && <Row icon="key" title={t('showPhrase')} onClick={() => setSheet('phrase')} />}
+        <Row icon="download" title={t('exportXdagj')} onClick={() => setSheet('export')} />
+        <Row icon="download" title={t('exportAddresses')} subtitle={<span class="wrap">{t('exportAddressesDesc')}</span>} onClick={exportAddressList} />
+        <Row icon="lock" title={t('lockNow')} onClick={async () => applyState(await call('lock'))} />
       </div>
 
       <div class="section-head">
-        <h3>{t("about")}</h3>
+        <h3>{t('about')}</h3>
       </div>
       <div class="card list-card">
-        <Row
-          icon="info"
-          title={`${t("appName")} ${version}`}
-          subtitle={<span class="wrap">{t("unofficialNote")}</span>}
-        />
+        <Row icon="info" title={`${t('appName')} ${version}`} subtitle={<span class="wrap">{t('unofficialNote')}</span>} />
         <Row
           icon="refresh"
-          title={t("checkUpdates")}
-          subtitle={
-            <span class="wrap">
-              {update.message ??
-                t(update.fromStore ? "autoUpdateNote" : "manualUpdateNote")}
-            </span>
-          }
+          title={t('checkUpdates')}
+          subtitle={<span class="wrap">{update.message ?? t(update.fromStore ? 'autoUpdateNote' : 'manualUpdateNote')}</span>}
           right={update.checking ? <Spinner size={16} /> : undefined}
           onClick={update.check}
         />
-        {update.ready && (
-          <Row
-            icon="refresh"
-            title={t("restartToUpdate")}
-            onClick={() => chrome.runtime.reload()}
-          />
-        )}
-        <Row
-          icon="external"
-          title="XDagger/xdagj"
-          subtitle={t("sourceCode")}
-          onClick={() => openExternal("https://github.com/XDagger/xdagj")}
-        />
-        <Row
-          icon="external"
-          title="XDagger/xdag"
-          subtitle={t("legacyClientSubtitle")}
-          onClick={() => openExternal("https://github.com/XDagger/xdag")}
-        />
-        <Row
-          icon="external"
-          title="XDagger/XDAG-Pro"
-          onClick={() => openExternal("https://github.com/XDagger/xdag-pro")}
-        />
-        <Row
-          icon="external"
-          title="xdag.website"
-          subtitle={t("richList")}
-          onClick={() => openExternal("https://xdag.website")}
-        />
+        {update.ready && <Row icon="refresh" title={t('restartToUpdate')} onClick={() => chrome.runtime.reload()} />}
+        <Row icon="external" title="XDagger/xdagj" subtitle={t('sourceCode')} onClick={() => openExternal('https://github.com/XDagger/xdagj')} />
+        <Row icon="external" title="XDagger/xdag" subtitle={t('legacyClientSubtitle')} onClick={() => openExternal('https://github.com/XDagger/xdag')} />
+        <Row icon="external" title="XDagger/XDAG-Pro" onClick={() => openExternal('https://github.com/XDagger/xdag-pro')} />
+        <Row icon="external" title="xdag.website" subtitle={t('richList')} onClick={() => openExternal('https://xdag.website')} />
       </div>
 
       <div class="section-head danger-head">
-        <h3>{t("dangerZone")}</h3>
+        <h3>{t('dangerZone')}</h3>
       </div>
       <div class="card list-card">
-        <Row
-          icon="trash"
-          danger
-          title={t("resetWallet")}
-          onClick={() => setSheet("reset")}
-        />
+        <Row icon="trash" danger title={t('resetWallet')} onClick={() => setSheet('reset')} />
       </div>
 
-      <Sheet
-        open={sheet === "language"}
-        onClose={() => setSheet(null)}
-        title={t("language")}
-      >
+      <Sheet open={sheet === 'language'} onClose={() => setSheet(null)} title={t('language')}>
         <div class="option-list">
           {(
             [
-              ["auto", t("languageAuto")],
-              ["zh-CN", "简体中文"],
-              ["en", "English"],
+              ['auto', t('languageAuto')],
+              ['zh-CN', '简体中文'],
+              ['en', 'English'],
             ] as const
           ).map(([v, label]) => (
-            <button
-              class={`option ${s.language === v ? "active" : ""}`}
-              onClick={() => (void patch({ language: v }), setSheet(null))}
-            >
+            <button class={`option ${s.language === v ? 'active' : ''}`} onClick={() => (void patch({ language: v }), setSheet(null))}>
               {label}
               {s.language === v && <Icon name="check" size={18} />}
             </button>
           ))}
         </div>
       </Sheet>
-      <Sheet
-        open={sheet === "autolock"}
-        onClose={() => setSheet(null)}
-        title={t("autoLock")}
-      >
+      <Sheet open={sheet === 'autolock'} onClose={() => setSheet(null)} title={t('autoLock')}>
         <div class="option-list">
           {LOCK_OPTIONS.map((m) => (
-            <button
-              class={`option ${s.autoLockMinutes === m ? "active" : ""}`}
-              onClick={() => (
-                void patch({ autoLockMinutes: m }),
-                setSheet(null)
-              )}
-            >
+            <button class={`option ${s.autoLockMinutes === m ? 'active' : ''}`} onClick={() => (void patch({ autoLockMinutes: m }), setSheet(null))}>
               {lockLabel(m)}
               {s.autoLockMinutes === m && <Icon name="check" size={18} />}
             </button>
           ))}
         </div>
       </Sheet>
-      <ChangePasswordSheet
-        open={sheet === "password"}
-        onClose={() => setSheet(null)}
-      />
+      <ChangePasswordSheet open={sheet === 'password'} onClose={() => setSheet(null)} />
       <PasswordSheet
-        open={sheet === "phrase" && !phrase}
-        title={t("showPhrase")}
+        open={sheet === 'phrase' && !phrase}
+        title={t('showPhrase')}
         onClose={() => setSheet(null)}
-        onSubmit={async (pw) =>
-          setPhrase((await call("exportMnemonic", { password: pw })).mnemonic)
-        }
+        onSubmit={async (pw) => setPhrase((await call('exportMnemonic', { password: pw })).mnemonic)}
       >
-        <Notice kind="danger">{t("backupWarn1")}</Notice>
+        <Notice kind="danger">{t('backupWarn1')}</Notice>
       </PasswordSheet>
-      <Sheet
-        open={!!phrase}
-        onClose={() => (setPhrase(null), setSheet(null))}
-        title={t("backupTitle")}
-      >
+      <Sheet open={!!phrase} onClose={() => (setPhrase(null), setSheet(null))} title={t('backupTitle')}>
         {phrase && (
           <div class="stack">
             <div class="phrase revealed">
               <ol>
-                {phrase.split(" ").map((w, i) => (
+                {phrase.split(' ').map((w, i) => (
                   <li>
                     <span class="phrase-n">{i + 1}</span>
                     <span class="phrase-w">{w}</span>
@@ -357,69 +219,48 @@ export function SettingsPage() {
             </div>
             <div class="row-actions">
               <CopyButton text={phrase} secret />
-              <span class="muted small">{t("copyPhrase")}</span>
+              <span class="muted small">{t('copyPhrase')}</span>
             </div>
-            <Notice kind="warning">{t("backupWarn2")}</Notice>
+            <Notice kind="warning">{t('backupWarn2')}</Notice>
           </div>
         )}
       </Sheet>
-      <ExportSheet open={sheet === "export"} onClose={() => setSheet(null)} />
+      <ExportSheet open={sheet === 'export'} onClose={() => setSheet(null)} />
       <PasswordSheet
-        open={sheet === "reset"}
+        open={sheet === 'reset'}
         danger
-        title={t("resetWallet")}
-        confirmLabel={t("resetButton")}
+        title={t('resetWallet')}
+        confirmLabel={t('resetButton')}
         onClose={() => setSheet(null)}
         onSubmit={async (pw) => {
-          applyState(await call("resetWallet", { password: pw }));
+          applyState(await call('resetWallet', { password: pw }));
           clearLocalCaches();
-          navigate("/welcome", undefined, true);
+          navigate('/welcome', undefined, true);
         }}
       >
-        <Notice kind="danger">{t("resetDesc")}</Notice>
+        <Notice kind="danger">{t('resetDesc')}</Notice>
       </PasswordSheet>
     </Page>
   );
 }
 
-function ChangePasswordSheet({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
-  const [oldPw, setOldPw] = useState("");
-  const [pw, setPw] = useState("");
-  const [pw2, setPw2] = useState("");
+function ChangePasswordSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [oldPw, setOldPw] = useState('');
+  const [pw, setPw] = useState('');
+  const [pw2, setPw2] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => {
-    if (!open) [setOldPw, setPw, setPw2].forEach((f) => f(""));
+    if (!open) [setOldPw, setPw, setPw2].forEach((f) => f(''));
     setErr(null);
   }, [open]);
   const ok = oldPw && pw.length >= 8 && pw === pw2;
   return (
-    <Sheet open={open} onClose={onClose} title={t("changePassword")}>
+    <Sheet open={open} onClose={onClose} title={t('changePassword')}>
       <div class="stack">
-        <PasswordField
-          label={t("currentPassword")}
-          value={oldPw}
-          onValue={setOldPw}
-          autoFocus
-        />
-        <PasswordField
-          label={t("newPassword")}
-          value={pw}
-          onValue={setPw}
-          error={pw && pw.length < 8 ? t("passwordTooShort") : null}
-        />
-        <PasswordField
-          label={t("confirmPassword")}
-          value={pw2}
-          onValue={setPw2}
-          error={pw2 && pw !== pw2 ? t("passwordMismatch") : null}
-        />
+        <PasswordField label={t('currentPassword')} value={oldPw} onValue={setOldPw} autoFocus />
+        <PasswordField label={t('newPassword')} value={pw} onValue={setPw} error={pw && pw.length < 8 ? t('passwordTooShort') : null} />
+        <PasswordField label={t('confirmPassword')} value={pw2} onValue={setPw2} error={pw2 && pw !== pw2 ? t('passwordMismatch') : null} />
         {err && <Notice kind="danger">{err}</Notice>}
         <Button
           block
@@ -429,11 +270,11 @@ function ChangePasswordSheet({
             setBusy(true);
             setErr(null);
             try {
-              await call("changePassword", {
+              await call('changePassword', {
                 oldPassword: oldPw,
                 newPassword: pw,
               });
-              toast(t("passwordChanged"), "success");
+              toast(t('passwordChanged'), 'success');
               onClose();
             } catch (e) {
               setErr(describeError(e));
@@ -442,7 +283,7 @@ function ChangePasswordSheet({
             }
           }}
         >
-          {t("save")}
+          {t('save')}
         </Button>
       </div>
     </Sheet>
@@ -455,33 +296,28 @@ function ChangePasswordSheet({
  */
 function exportAddressList() {
   const accounts = wallet.value?.accounts ?? [];
-  const lines = [
-    `Sheath — ${t("exportAddresses")} — ${new Date().toISOString().slice(0, 10)}`,
-    t("exportAddressesDesc"),
-    "",
-  ];
+  const d = new Date();
+  const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; // local date
+  const lines = [`Sheath — ${t('exportAddresses')} — ${day}`, t('exportAddressesDesc'), ''];
   for (const a of accounts) {
-    lines.push(
-      `${a.name} (${t(`source_${a.source}` as MessageKey)})`,
-      `  ${t("address")}: ${a.address}`,
-    );
+    lines.push(`${a.name} (${t(`source_${a.source}` as MessageKey)})`, `  ${t('address')}: ${a.address}`);
     if (a.legacyBlocks.length) {
-      lines.push(`  ${t("legacyBlocksLabel")}:`);
+      lines.push(`  ${t('legacyBlocksLabel')}:`);
       for (const b of a.legacyBlocks) lines.push(`    ${b}`);
     }
-    lines.push("");
+    lines.push('');
   }
-  download("sheath-addresses.txt", new TextEncoder().encode(lines.join("\n")));
-  toast(t("exportDone", { n: accounts.length }), "success");
+  download('sheath-addresses.txt', new TextEncoder().encode(lines.join('\n')));
+  toast(t('exportDone', { n: accounts.length }), 'success');
 }
 
 function download(name: string, bytes: Uint8Array) {
   const url = URL.createObjectURL(
     new Blob([bytes.slice().buffer as ArrayBuffer], {
-      type: "application/octet-stream",
+      type: 'application/octet-stream',
     }),
   );
-  const a = document.createElement("a");
+  const a = document.createElement('a');
   a.href = url;
   a.download = name;
   document.body.appendChild(a);
@@ -490,45 +326,24 @@ function download(name: string, bytes: Uint8Array) {
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
-function ExportSheet({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
-  const [pw, setPw] = useState("");
-  const [filePw, setFilePw] = useState("");
-  const [filePw2, setFilePw2] = useState("");
+function ExportSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [pw, setPw] = useState('');
+  const [filePw, setFilePw] = useState('');
+  const [filePw2, setFilePw2] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => {
-    if (!open) [setPw, setFilePw, setFilePw2].forEach((f) => f(""));
+    if (!open) [setPw, setFilePw, setFilePw2].forEach((f) => f(''));
     setErr(null);
   }, [open]);
   const ok = pw && filePw.length >= 8 && filePw === filePw2;
   return (
-    <Sheet open={open} onClose={onClose} title={t("exportXdagj")}>
+    <Sheet open={open} onClose={onClose} title={t('exportXdagj')}>
       <div class="stack">
-        <p class="muted small">{t("exportXdagjDesc")}</p>
-        <PasswordField
-          label={t("currentPassword")}
-          value={pw}
-          onValue={setPw}
-          autoFocus
-        />
-        <PasswordField
-          label={t("exportFilePassword")}
-          value={filePw}
-          onValue={setFilePw}
-          error={filePw && filePw.length < 8 ? t("passwordTooShort") : null}
-        />
-        <PasswordField
-          label={t("confirmPassword")}
-          value={filePw2}
-          onValue={setFilePw2}
-          error={filePw2 && filePw !== filePw2 ? t("passwordMismatch") : null}
-        />
+        <p class="muted small">{t('exportXdagjDesc')}</p>
+        <PasswordField label={t('currentPassword')} value={pw} onValue={setPw} autoFocus />
+        <PasswordField label={t('exportFilePassword')} value={filePw} onValue={setFilePw} error={filePw && filePw.length < 8 ? t('passwordTooShort') : null} />
+        <PasswordField label={t('confirmPassword')} value={filePw2} onValue={setFilePw2} error={filePw2 && filePw !== filePw2 ? t('passwordMismatch') : null} />
         {err && <Notice kind="danger">{err}</Notice>}
         <Button
           block
@@ -539,12 +354,12 @@ function ExportSheet({
             setBusy(true);
             setErr(null);
             try {
-              const res = await call("exportXdagjWallet", {
+              const res = await call('exportXdagjWallet', {
                 password: pw,
                 filePassword: filePw,
               });
-              download("wallet.data", fromBase64(res.file));
-              toast(t("exportDone", { n: res.count }), "success");
+              download('wallet.data', fromBase64(res.file));
+              toast(t('exportDone', { n: res.count }), 'success');
               onClose();
             } catch (e) {
               setErr(describeError(e));
@@ -553,7 +368,7 @@ function ExportSheet({
             }
           }}
         >
-          {t("exportXdagj")}
+          {t('exportXdagj')}
         </Button>
       </div>
     </Sheet>
@@ -577,12 +392,12 @@ export function NetworksPage() {
   const select = async (n: NetworkConfig) => {
     // request host access synchronously within the click for custom nodes
     const granted = n.builtin || (await ensurePermission(n.rpcUrl));
-    if (!granted) return toast(t("permissionDenied"), "error");
+    if (!granted) return toast(t('permissionDenied'), 'error');
     await patch({ networkId: n.id });
   };
   return (
     <Page
-      title={t("networks")}
+      title={t('networks')}
       footer={
         <Button
           block
@@ -590,66 +405,48 @@ export function NetworksPage() {
           icon="plus"
           onClick={() =>
             setEditing({
-              id: "",
-              name: "",
-              kind: "mainnet",
-              rpcUrl: "https://",
-              explorerUrl: "",
+              id: '',
+              name: '',
+              kind: 'mainnet',
+              rpcUrl: 'https://',
+              explorerUrl: '',
               builtin: false,
             })
           }
         >
-          {t("addNetwork")}
+          {t('addNetwork')}
         </Button>
       }
     >
       <div class="card list-card">
         {allNetworks(s).map((n) => (
-          <div class={`net-row ${s.networkId === n.id ? "active" : ""}`}>
+          <div class={`net-row ${s.networkId === n.id ? 'active' : ''}`}>
             <button class="net-row-main" onClick={() => select(n)}>
-              <span class={`radio ${s.networkId === n.id ? "on" : ""}`} />
+              <span class={`radio ${s.networkId === n.id ? 'on' : ''}`} />
               <span class="row-main">
                 <span class="row-title">
-                  {networkLabel(n)}{" "}
-                  <span class={`kind kind-${n.kind}`}>
-                    {t(`net_${n.kind}` as MessageKey)}
-                  </span>
-                  {n.builtin && <span class="badge-soft">{t("builtin")}</span>}
+                  {networkLabel(n)} <span class={`kind kind-${n.kind}`}>{t(`net_${n.kind}` as MessageKey)}</span>
+                  {n.builtin && <span class="badge-soft">{t('builtin')}</span>}
                 </span>
                 <span class="row-sub mono">{n.rpcUrl}</span>
               </span>
             </button>
-            {!n.builtin && (
-              <IconButton
-                icon="edit"
-                label={t("edit")}
-                onClick={() => setEditing(n)}
-                size={16}
-              />
-            )}
+            {!n.builtin && <IconButton icon="edit" label={t('edit')} onClick={() => setEditing(n)} size={16} />}
           </div>
         ))}
       </div>
-      <Notice kind="info">{t("nodeDataNote")}</Notice>
+      <Notice kind="info">{t('nodeDataNote')}</Notice>
       <NetworkEditor value={editing} onClose={() => setEditing(null)} />
     </Page>
   );
 }
 
-function NetworkEditor({
-  value,
-  onClose,
-}: {
-  value: NetworkConfig | null;
-  onClose: () => void;
-}) {
-  const [name, setName] = useState("");
-  const [rpcUrl, setRpcUrl] = useState("");
-  const [explorerUrl, setExplorerUrl] = useState("");
-  const [kind, setKind] = useState<NetworkKind>("mainnet");
-  const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(
-    null,
-  );
+function NetworkEditor({ value, onClose }: { value: NetworkConfig | null; onClose: () => void }) {
+  const [name, setName] = useState('');
+  const [rpcUrl, setRpcUrl] = useState('');
+  const [explorerUrl, setExplorerUrl] = useState('');
+  const [kind, setKind] = useState<NetworkKind>('mainnet');
+  const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     if (!value) return;
@@ -659,24 +456,23 @@ function NetworkEditor({
     setKind(value.kind);
     setStatus(null);
   }, [value]);
-  const urlErr =
-    rpcUrl && rpcUrl !== "https://" ? validateNodeUrl(rpcUrl) : null;
+  const urlErr = rpcUrl && rpcUrl !== 'https://' ? validateNodeUrl(rpcUrl) : null;
   const expErr = explorerUrl ? validateNodeUrl(explorerUrl) : null;
 
   const test = async () => {
     setStatus(null);
     const granted = await ensurePermission(rpcUrl);
-    if (!granted) return setStatus({ ok: false, text: t("permissionDenied") });
+    if (!granted) return setStatus({ ok: false, text: t('permissionDenied') });
     setBusy(true);
     try {
       const r = new XdagRpc(rpcUrl, 10_000);
       const [net, h] = await Promise.all([r.netType(), r.blockNumber()]);
       if (net !== kind) setKind(net as NetworkKind);
-      setStatus({ ok: true, text: t("connectionOk", { net, h }) });
+      setStatus({ ok: true, text: t('connectionOk', { net, h }) });
     } catch (e) {
       setStatus({
         ok: false,
-        text: t("connectionFail", { msg: (e as Error).message }),
+        text: t('connectionFail', { msg: (e as Error).message }),
       });
     } finally {
       setBusy(false);
@@ -684,70 +480,42 @@ function NetworkEditor({
   };
 
   return (
-    <Sheet
-      open={!!value}
-      onClose={onClose}
-      title={value?.id ? t("edit") : t("addNetwork")}
-    >
+    <Sheet open={!!value} onClose={onClose} title={value?.id ? t('edit') : t('addNetwork')}>
       {value && (
         <div class="stack">
+          <TextField label={t('networkName')} value={name} onValue={setName} maxLength={32} autoFocus />
+          <TextField label={t('rpcUrl')} value={rpcUrl} onValue={setRpcUrl} mono error={urlErr ? errorText(`node_url_${urlErr}`) : null} />
           <TextField
-            label={t("networkName")}
-            value={name}
-            onValue={setName}
-            maxLength={32}
-            autoFocus
-          />
-          <TextField
-            label={t("rpcUrl")}
-            value={rpcUrl}
-            onValue={setRpcUrl}
-            mono
-            error={urlErr ? errorText(`node_url_${urlErr}`) : null}
-          />
-          <TextField
-            label={`${t("explorerUrl")} · ${t("optional")}`}
+            label={`${t('explorerUrl')} · ${t('optional')}`}
             value={explorerUrl}
             onValue={setExplorerUrl}
             mono
-            error={expErr ? errorText("explorer_url_invalid") : null}
+            error={expErr ? errorText('explorer_url_invalid') : null}
           />
           <div class="field">
-            <div class="field-label">{t("networkKind")}</div>
+            <div class="field-label">{t('networkKind')}</div>
             <Segmented<NetworkKind>
               value={kind}
               onChange={setKind}
               options={[
-                { value: "mainnet", label: t("net_mainnet") },
-                { value: "testnet", label: t("net_testnet") },
-                { value: "devnet", label: t("net_devnet") },
+                { value: 'mainnet', label: t('net_mainnet') },
+                { value: 'testnet', label: t('net_testnet') },
+                { value: 'devnet', label: t('net_devnet') },
               ]}
             />
           </div>
-          {status && (
-            <Notice kind={status.ok ? "success" : "danger"}>
-              {status.text}
-            </Notice>
-          )}
+          {status && <Notice kind={status.ok ? 'success' : 'danger'}>{status.text}</Notice>}
           <div class="button-row">
-            <Button
-              variant="secondary"
-              loading={busy}
-              disabled={!!urlErr || rpcUrl === "https://"}
-              onClick={test}
-            >
-              {t("testConnection")}
+            <Button variant="secondary" loading={busy} disabled={!!urlErr || rpcUrl === 'https://'} onClick={test}>
+              {t('testConnection')}
             </Button>
             <Button
-              disabled={
-                !!urlErr || !!expErr || !name.trim() || rpcUrl === "https://"
-              }
+              disabled={!!urlErr || !!expErr || !name.trim() || rpcUrl === 'https://'}
               onClick={async () => {
-                if (!(await ensurePermission(rpcUrl)))
-                  return toast(t("permissionDenied"), "error");
+                if (!(await ensurePermission(rpcUrl))) return toast(t('permissionDenied'), 'error');
                 try {
                   applySettings(
-                    await call("upsertNetwork", {
+                    await call('upsertNetwork', {
                       network: { ...value, name, rpcUrl, explorerUrl, kind },
                     }),
                   );
@@ -757,7 +525,7 @@ function NetworkEditor({
                 }
               }}
             >
-              {t("save")}
+              {t('save')}
             </Button>
           </div>
           {value.id && (
@@ -766,11 +534,11 @@ function NetworkEditor({
               class="danger-text"
               icon="trash"
               onClick={async () => {
-                applySettings(await call("removeNetwork", { id: value.id }));
+                applySettings(await call('removeNetwork', { id: value.id }));
                 onClose();
               }}
             >
-              {t("delete")}
+              {t('delete')}
             </Button>
           )}
         </div>
@@ -786,20 +554,15 @@ export function ContactsPage() {
   useEffect(() => void loadContacts(), []);
   return (
     <Page
-      title={t("contactsTitle")}
+      title={t('contactsTitle')}
       footer={
-        <Button
-          block
-          variant="secondary"
-          icon="plus"
-          onClick={() => setEditing({ id: "", name: "", address: "" })}
-        >
-          {t("addContact")}
+        <Button block variant="secondary" icon="plus" onClick={() => setEditing({ id: '', name: '', address: '' })}>
+          {t('addContact')}
         </Button>
       }
     >
       {contacts.value.length === 0 ? (
-        <Empty icon="users" title={t("noContacts")} />
+        <Empty icon="users" title={t('noContacts')} />
       ) : (
         <div class="card list-card">
           {contacts.value.map((c) => (
@@ -809,15 +572,7 @@ export function ContactsPage() {
                 <span class="account-item-name">{c.name}</span>
                 <span class="row-sub mono">{middle(c.address, 8, 8)}</span>
               </span>
-              <IconButton
-                icon="send"
-                label={t("send")}
-                size={16}
-                onClick={(e) => (
-                  e.stopPropagation(),
-                  navigate("/send", { to: c.address })
-                )}
-              />
+              <IconButton icon="send" label={t('send')} size={16} onClick={(e) => (e.stopPropagation(), navigate('/send', { to: c.address }))} />
             </button>
           ))}
         </div>
@@ -827,62 +582,30 @@ export function ContactsPage() {
   );
 }
 
-function ContactEditor({
-  value,
-  onClose,
-}: {
-  value: Contact | null;
-  onClose: () => void;
-}) {
-  const [name, setName] = useState("");
-  const [address, setAddress] = useState("");
-  const [note, setNote] = useState("");
+function ContactEditor({ value, onClose }: { value: Contact | null; onClose: () => void }) {
+  const [name, setName] = useState('');
+  const [address, setAddress] = useState('');
+  const [note, setNote] = useState('');
   useEffect(() => {
     if (!value) return;
     setName(value.name);
     setAddress(value.address);
-    setNote(value.note ?? "");
+    setNote(value.note ?? '');
   }, [value]);
-  const addrErr =
-    address && !isValidAddress(address.trim())
-      ? isLegacyAddress(address.trim())
-        ? t("legacyDestination")
-        : t("invalidAddress")
-      : null;
+  const addrErr = address && !isValidAddress(address.trim()) ? (isLegacyAddress(address.trim()) ? t('legacyDestination') : t('invalidAddress')) : null;
   return (
-    <Sheet
-      open={!!value}
-      onClose={onClose}
-      title={value?.id ? t("editContact") : t("addContact")}
-    >
+    <Sheet open={!!value} onClose={onClose} title={value?.id ? t('editContact') : t('addContact')}>
       {value && (
         <div class="stack">
-          <TextField
-            label={t("contactName")}
-            value={name}
-            onValue={setName}
-            maxLength={40}
-            autoFocus
-          />
-          <TextField
-            label={t("address")}
-            value={address}
-            onValue={setAddress}
-            mono
-            error={addrErr}
-          />
-          <TextField
-            label={`${t("contactNote")} · ${t("optional")}`}
-            value={note}
-            onValue={setNote}
-            maxLength={100}
-          />
+          <TextField label={t('contactName')} value={name} onValue={setName} maxLength={40} autoFocus />
+          <TextField label={t('address')} value={address} onValue={setAddress} mono error={addrErr} />
+          <TextField label={`${t('contactNote')} · ${t('optional')}`} value={note} onValue={setNote} maxLength={100} />
           <Button
             block
             disabled={!name.trim() || !address || !!addrErr}
             onClick={async () => {
               try {
-                contacts.value = await call("saveContact", {
+                contacts.value = await call('saveContact', {
                   contact: {
                     id: value.id,
                     name,
@@ -896,7 +619,7 @@ function ContactEditor({
               }
             }}
           >
-            {t("save")}
+            {t('save')}
           </Button>
           {value.id && (
             <Button
@@ -904,11 +627,11 @@ function ContactEditor({
               class="danger-text"
               icon="trash"
               onClick={async () => {
-                contacts.value = await call("deleteContact", { id: value.id });
+                contacts.value = await call('deleteContact', { id: value.id });
                 onClose();
               }}
             >
-              {t("delete")}
+              {t('delete')}
             </Button>
           )}
         </div>

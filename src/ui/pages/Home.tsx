@@ -1,29 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
-import { parseNodeAmount } from "@/core/amount";
-import type { BlockResponse, TxLink } from "@/core/rpc";
-import { explorerLink } from "@/shared/networks";
-import type { Account, PendingTx } from "@/shared/types";
-import { call, openExternal } from "../api";
-import {
-  AddressLine,
-  Button,
-  CopyButton,
-  Empty,
-  IconButton,
-  Identicon,
-  Notice,
-  Sheet,
-  Skeleton,
-  Spinner,
-} from "../components";
-import { dayLabel, fmtAmount, fmtDateTime, fmtTime, middle } from "../format";
-import { Icon, type IconName } from "../icons";
-import { networkLabel, t } from "../i18n";
-import { navigate } from "../router";
-import { createAccount } from "./Accounts";
+import { useCallback, useEffect, useMemo, useState } from 'preact/hooks';
+import { parseNodeAmount } from '@/core/amount';
+import type { BlockResponse, TxLink } from '@/core/rpc';
+import { explorerLink } from '@/shared/networks';
+import type { Account, PendingTx } from '@/shared/types';
+import { call, openExternal } from '../api';
+import { AddressLine, Button, CopyButton, Empty, IconButton, Identicon, Notice, Sheet, Skeleton, Spinner } from '../components';
+import { dayLabel, fmtAmount, fmtDateTime, fmtTime, middle } from '../format';
+import { Icon, type IconName } from '../icons';
+import { networkLabel, t } from '../i18n';
+import { navigate } from '../router';
+import { createAccount } from './Accounts';
 
 /** where to buy XDAG (XT.com spot market) */
-const BUY_URL = "https://www.xt.com/en/trade/xdag_usdt";
+const BUY_URL = 'https://www.xt.com/en/trade/xdag_usdt';
 import {
   accounts,
   applySettings,
@@ -42,11 +31,11 @@ import {
   toastError,
   unknownOnNode,
   wallet,
-} from "../state";
+} from '../state';
 
 interface ActivityItem {
   key: string;
-  kind: "sent" | "received" | "reward" | "snapshot" | "other";
+  kind: 'sent' | 'received' | 'reward' | 'snapshot' | 'other';
   amount: bigint | null;
   time: number;
   remark: string;
@@ -54,15 +43,12 @@ interface ActivityItem {
   pending?: PendingTx;
 }
 
-const kindMeta: Record<
-  ActivityItem["kind"],
-  { icon: IconName; label: () => string; cls: string }
-> = {
-  sent: { icon: "send", label: () => t("sentTx"), cls: "out" },
-  received: { icon: "receive", label: () => t("receivedTx"), cls: "in" },
-  reward: { icon: "star", label: () => t("rewardTx"), cls: "in" },
-  snapshot: { icon: "layers", label: () => t("snapshotTx"), cls: "in" },
-  other: { icon: "swap", label: () => t("otherTx"), cls: "" },
+const kindMeta: Record<ActivityItem['kind'], { icon: IconName; label: () => string; cls: string }> = {
+  sent: { icon: 'send', label: () => t('sentTx'), cls: 'out' },
+  received: { icon: 'receive', label: () => t('receivedTx'), cls: 'in' },
+  reward: { icon: 'star', label: () => t('rewardTx'), cls: 'in' },
+  snapshot: { icon: 'layers', label: () => t('snapshotTx'), cls: 'in' },
+  other: { icon: 'swap', label: () => t('otherTx'), cls: '' },
 };
 
 /**
@@ -71,16 +57,7 @@ const kindMeta: Record<
  * 1 "output" money that went out, 2 a mining reward — the same words the C client used.
  */
 function toItem(tx: TxLink): ActivityItem {
-  const kind =
-    tx.direction === 0
-      ? "received"
-      : tx.direction === 1
-        ? "sent"
-        : tx.direction === 2
-          ? "reward"
-          : tx.remark === "snapshot"
-            ? "snapshot"
-            : "other";
+  const kind = tx.direction === 0 ? 'received' : tx.direction === 1 ? 'sent' : tx.direction === 2 ? 'reward' : tx.remark === 'snapshot' ? 'snapshot' : 'other';
   let amount: bigint | null = null;
   try {
     amount = parseNodeAmount(tx.amount);
@@ -92,23 +69,18 @@ function toItem(tx: TxLink): ActivityItem {
     kind,
     amount,
     time: tx.time,
-    remark: (tx.remark ?? "").trim(),
+    remark: (tx.remark ?? '').trim(),
     txAddress: tx.address,
   };
 }
 
 // in-memory cache so re-opening the popup paints instantly
-const historyCache = new Map<
-  string,
-  { items: ActivityItem[]; page: number; totalPage: number }
->();
+const historyCache = new Map<string, { items: ActivityItem[]; page: number; totalPage: number }>();
 
 function useHistory(address: string | undefined) {
   const cacheKey = `${network.value.id}:${address}`;
   const cached = address ? historyCache.get(cacheKey) : undefined;
-  const [items, setItems] = useState<ActivityItem[] | null>(
-    cached?.items ?? null,
-  );
+  const [items, setItems] = useState<ActivityItem[] | null>(cached?.items ?? null);
   const [page, setPage] = useState(cached?.page ?? 1);
   const [totalPage, setTotalPage] = useState(cached?.totalPage ?? 1);
   const [loading, setLoading] = useState(false);
@@ -170,12 +142,8 @@ export function Home() {
 
   const refreshAll = useCallback(async () => {
     if (!acct) return;
-    await Promise.all([
-      refreshBalance(acct.address),
-      ...acct.legacyBlocks.map((b) => refreshBalance(b)),
-      loadPending(),
-    ]);
-  }, [acct?.address, acct?.legacyBlocks.join(",")]);
+    await Promise.all([refreshBalance(acct.address), ...acct.legacyBlocks.map((b) => refreshBalance(b)), loadPending()]);
+  }, [acct?.address, acct?.legacyBlocks.join(',')]);
 
   useEffect(() => {
     void refreshAll();
@@ -190,23 +158,14 @@ export function Home() {
   const pending = useMemo(() => {
     if (!acct) return [];
     const mine = new Set([acct.address, ...acct.legacyBlocks]);
-    return pendingTxs.value.filter(
-      (p) => p.networkId === net.id && (mine.has(p.from) || mine.has(p.to)),
-    );
+    return pendingTxs.value.filter((p) => p.networkId === net.id && (mine.has(p.from) || mine.has(p.to)));
   }, [pendingTxs.value, acct?.address, net.id]);
 
   useEffect(() => {
     if (!history.items || !pending.length) return;
     const seen = new Set(history.items.map((i) => i.txAddress));
-    const done = pending
-      .filter(
-        (p) => seen.has(p.blockAddress) || Date.now() - p.time > 24 * 3600_000,
-      )
-      .map((p) => p.blockAddress);
-    if (done.length)
-      call("dropPending", { blockAddresses: done }).then(
-        (l) => (pendingTxs.value = l),
-      );
+    const done = pending.filter((p) => seen.has(p.blockAddress) || Date.now() - p.time > 24 * 3600_000).map((p) => p.blockAddress);
+    if (done.length) call('dropPending', { blockAddresses: done }).then((l) => (pendingTxs.value = l));
   }, [history.items, pending]);
 
   if (!acct) return null;
@@ -214,8 +173,7 @@ export function Home() {
 
   const pendingItems: ActivityItem[] = pending.map((p) => ({
     key: `p-${p.blockAddress}`,
-    kind:
-      p.to === acct.address && p.from !== acct.address ? "received" : "sent",
+    kind: p.to === acct.address && p.from !== acct.address ? 'received' : 'sent',
     amount: BigInt(p.amount),
     time: p.time,
     remark: p.remark,
@@ -225,7 +183,7 @@ export function Home() {
   const all = [...pendingItems, ...(history.items ?? [])];
   const groups: { label: string; items: ActivityItem[] }[] = [];
   for (const it of all) {
-    const label = it.pending ? t("pending") : dayLabel(it.time);
+    const label = it.pending ? t('pending') : dayLabel(it.time);
     const g = groups[groups.length - 1];
     if (g && g.label === label) g.items.push(it);
     else groups.push({ label, items: [it] });
@@ -241,80 +199,59 @@ export function Home() {
           <Icon name="chevronDown" size={16} />
         </button>
         <div class="topbar-right">
-          <button
-            class={`net-pill net-${net.kind}`}
-            onClick={() => navigate("/settings/networks")}
-            title={net.rpcUrl}
-          >
+          <button class={`net-pill net-${net.kind}`} onClick={() => navigate('/settings/networks')} title={net.rpcUrl}>
             <span class="dot" />
             {networkLabel(net)}
           </button>
-          <IconButton
-            icon="lock"
-            label={t("lock")}
-            onClick={async () => applyState(await call("lock"))}
-          />
-          <IconButton
-            icon="sliders"
-            label={t("settingsTitle")}
-            onClick={() => navigate("/settings")}
-          />
+          <IconButton icon="lock" label={t('lock')} onClick={async () => applyState(await call('lock'))} />
+          <IconButton icon="sliders" label={t('settingsTitle')} onClick={() => navigate('/settings')} />
         </div>
       </header>
 
       <main class="home-scroll">
         <section class="balance-card">
           <div class="balance-label">
-            {t("totalBalance")}
+            {t('totalBalance')}
             <button
               class="icon-btn tiny"
-              aria-label={hide ? t("show") : t("hide")}
+              aria-label={hide ? t('show') : t('hide')}
               onClick={async () =>
                 applySettings(
-                  await call("updateSettings", {
+                  await call('updateSettings', {
                     patch: { hideBalance: !hide },
                   }),
                 )
               }
             >
-              <Icon name={hide ? "eyeOff" : "eye"} size={15} />
+              <Icon name={hide ? 'eyeOff' : 'eye'} size={15} />
             </button>
           </div>
           <div class="balance-value" key={`${acct.address}-${balance}`}>
-            {balance === null ? (
-              <Skeleton width={150} height={30} />
-            ) : (
-              fmtAmount(balance, { hide, decimals: 4 })
-            )}
+            {balance === null ? <Skeleton width={150} height={30} /> : fmtAmount(balance, { hide, decimals: 4 })}
             <span class="unit">XDAG</span>
           </div>
           <div class="balance-address">
             <AddressLine address={acct.address} />
           </div>
           <div class="balance-actions">
-            <button class="action" onClick={() => navigate("/send")}>
+            <button class="action" onClick={() => navigate('/send')}>
               <span>
                 <Icon name="send" />
               </span>
-              {t("send")}
+              {t('send')}
             </button>
-            <button class="action" onClick={() => navigate("/receive")}>
+            <button class="action" onClick={() => navigate('/receive')}>
               <span>
                 <Icon name="receive" />
               </span>
-              {t("receive")}
+              {t('receive')}
             </button>
             {acct.legacyBlocks.length > 0 && (
-              <button
-                class="action"
-                onClick={() =>
-                  navigate("/legacy-send", { block: acct.legacyBlocks[0]! })
-                }
-              >
+              <button class="action" onClick={() => navigate('/legacy-send', { block: acct.legacyBlocks[0]! })}>
                 <span>
                   <Icon name="swap" />
                 </span>
-                {t("migrate")}
+                {t('migrate')}
               </button>
             )}
             {explorer && (
@@ -322,31 +259,31 @@ export function Home() {
                 <span>
                   <Icon name="globe" />
                 </span>
-                {t("explorer")}
+                {t('explorer')}
               </button>
             )}
             <button class="action" onClick={() => openExternal(BUY_URL)}>
               <span>
                 <Icon name="cart" />
               </span>
-              {t("buy")}
+              {t('buy')}
             </button>
           </div>
         </section>
 
         {wallet.value?.needsBackup && (
-          <div class="banner" onClick={() => navigate("/backup")} role="button">
+          <div class="banner" onClick={() => navigate('/backup')} role="button">
             <Icon name="shield" size={18} />
-            <span>{t("backupBanner")}</span>
-            <strong>{t("backupNow")}</strong>
+            <span>{t('backupBanner')}</span>
+            <strong>{t('backupNow')}</strong>
           </div>
         )}
-        {nodeError.value && <Notice kind="warning">{t("nodeError")}</Notice>}
+        {nodeError.value && <Notice kind="warning">{t('nodeError')}</Notice>}
 
         {acct.legacyBlocks.length > 0 && (
           <section class="section">
             <div class="section-head">
-              <h3>{t("legacyTitle")}</h3>
+              <h3>{t('legacyTitle')}</h3>
             </div>
             <div class="card list-card">
               {acct.legacyBlocks.map((b) => (
@@ -365,19 +302,14 @@ export function Home() {
                       {balances.value[b] ? (
                         `${fmtAmount(balanceOf(b), { hide, decimals: 4 })} XDAG`
                       ) : unknownOnNode.value[b] ? (
-                        t("notOnNode")
+                        t('notOnNode')
                       ) : (
                         <Skeleton width={70} height={11} />
                       )}
                     </span>
                   </span>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    disabled={!balanceOf(b)}
-                    onClick={() => navigate("/legacy-send", { block: b })}
-                  >
-                    {t("moveFunds")}
+                  <Button size="sm" variant="secondary" disabled={!balanceOf(b)} onClick={() => navigate('/legacy-send', { block: b })}>
+                    {t('moveFunds')}
                   </Button>
                 </div>
               ))}
@@ -387,11 +319,11 @@ export function Home() {
 
         <section class="section">
           <div class="section-head">
-            <h3>{t("activity")}</h3>
+            <h3>{t('activity')}</h3>
             <IconButton
               icon="refresh"
-              label={t("refresh")}
-              class={history.loading ? "spinning" : ""}
+              label={t('refresh')}
+              class={history.loading ? 'spinning' : ''}
               onClick={() => (void refreshAll(), void history.reload())}
               size={16}
             />
@@ -409,35 +341,22 @@ export function Home() {
               ))}
             </div>
           ) : all.length === 0 ? (
-            <Empty
-              icon="history"
-              title={t("noActivity")}
-              desc={t("noActivityDesc")}
-            />
+            <Empty icon="history" title={t('noActivity')} desc={t('noActivityDesc')} />
           ) : (
             groups.map((g) => (
               <div class="tx-group">
                 <div class="tx-group-label">{g.label}</div>
                 <div class="card list-card">
                   {g.items.map((it) => (
-                    <TxRow
-                      item={it}
-                      hide={hide}
-                      onClick={() => setDetail(it)}
-                    />
+                    <TxRow item={it} hide={hide} onClick={() => setDetail(it)} />
                   ))}
                 </div>
               </div>
             ))
           )}
           {history.items && history.page < history.totalPage && (
-            <Button
-              block
-              variant="ghost"
-              loading={history.loading}
-              onClick={history.more}
-            >
-              {t("loadMore")}
+            <Button block variant="ghost" loading={history.loading} onClick={history.more}>
+              {t('loadMore')}
             </Button>
           )}
         </section>
@@ -449,54 +368,26 @@ export function Home() {
   );
 }
 
-function TxRow({
-  item,
-  hide,
-  onClick,
-}: {
-  item: ActivityItem;
-  hide: boolean;
-  onClick: () => void;
-}) {
+function TxRow({ item, hide, onClick }: { item: ActivityItem; hide: boolean; onClick: () => void }) {
   const meta = kindMeta[item.kind];
-  const out = item.kind === "sent";
+  const out = item.kind === 'sent';
   return (
     <button class="tx-row" onClick={onClick}>
-      <span class={`tx-icon ${meta.cls} ${item.pending ? "pending" : ""}`}>
-        {item.pending ? (
-          <Spinner size={16} />
-        ) : (
-          <Icon name={meta.icon} size={17} />
-        )}
-      </span>
+      <span class={`tx-icon ${meta.cls} ${item.pending ? 'pending' : ''}`}>{item.pending ? <Spinner size={16} /> : <Icon name={meta.icon} size={17} />}</span>
       <span class="tx-main">
         <span class="tx-title">{meta.label()}</span>
         <span class="row-sub">
           {fmtTime(item.time)}
-          {item.remark ? ` · ${item.remark}` : ""}
+          {item.remark ? ` · ${item.remark}` : ''}
         </span>
       </span>
-      <span class={`tx-amount ${out ? "out" : "in"}`}>
-        {item.amount === null
-          ? "—"
-          : `${out ? "−" : "+"}${fmtAmount(item.amount, { hide, decimals: 4 })}`}
-      </span>
+      <span class={`tx-amount ${out ? 'out' : 'in'}`}>{item.amount === null ? '—' : `${out ? '−' : '+'}${fmtAmount(item.amount, { hide, decimals: 4 })}`}</span>
     </button>
   );
 }
 
-function TxDetail({
-  item,
-  onClose,
-  account,
-}: {
-  item: ActivityItem | null;
-  onClose: () => void;
-  account: Account;
-}) {
-  const [block, setBlock] = useState<BlockResponse | null | undefined>(
-    undefined,
-  );
+function TxDetail({ item, onClose, account }: { item: ActivityItem | null; onClose: () => void; account: Account }) {
+  const [block, setBlock] = useState<BlockResponse | null | undefined>(undefined);
   useEffect(() => {
     setBlock(undefined);
     if (!item) return;
@@ -508,95 +399,79 @@ function TxDetail({
   const outputs = block?.refs?.filter((r) => r.direction === 1) ?? [];
   const feeRef = block?.refs?.find((r) => r.direction === 2);
   return (
-    <Sheet open={!!item} onClose={onClose} title={t("txDetails")}>
+    <Sheet open={!!item} onClose={onClose} title={t('txDetails')}>
       {item && (
         <div class="tx-detail">
-          <div
-            class={`tx-detail-amount ${item.kind === "sent" ? "out" : "in"}`}
-          >
-            {item.amount === null
-              ? "—"
-              : `${item.kind === "sent" ? "−" : "+"}${fmtAmount(item.amount, { hide })}`}{" "}
-            <small>XDAG</small>
+          <div class={`tx-detail-amount ${item.kind === 'sent' ? 'out' : 'in'}`}>
+            {item.amount === null ? '—' : `${item.kind === 'sent' ? '−' : '+'}${fmtAmount(item.amount, { hide })}`} <small>XDAG</small>
           </div>
           <dl class="kv">
-            <dt>{t("status")}</dt>
+            <dt>{t('status')}</dt>
             <dd>
               {item.pending && (!block || !block.state) ? (
                 item.pending.uncertain ? (
-                  t("statusUnknown")
+                  t('statusUnknown')
                 ) : (
-                  t("pending")
+                  t('pending')
                 )
               ) : block === undefined ? (
                 <Spinner size={14} />
               ) : (
-                (block?.state ?? t("notFoundYet"))
+                (block?.state ?? t('notFoundYet'))
               )}
             </dd>
-            <dt>{t("time")}</dt>
+            <dt>{t('time')}</dt>
             <dd>{fmtDateTime(item.time)}</dd>
             {inputs.map((r) => (
               <>
-                <dt>{t("from")}</dt>
+                <dt>{t('from')}</dt>
                 <dd class="mono">
-                  {lookupName(r.address) ?? middle(r.address, 8, 8)}{" "}
-                  <CopyButton text={r.address} />
+                  {lookupName(r.address) ?? middle(r.address, 8, 8)} <CopyButton text={r.address} />
                 </dd>
               </>
             ))}
             {item.pending && !inputs.length && (
               <>
-                <dt>{t("to")}</dt>
+                <dt>{t('to')}</dt>
                 <dd class="mono">
-                  {lookupName(item.pending.to) ?? middle(item.pending.to, 8, 8)}{" "}
-                  <CopyButton text={item.pending.to} />
+                  {lookupName(item.pending.to) ?? middle(item.pending.to, 8, 8)} <CopyButton text={item.pending.to} />
                 </dd>
               </>
             )}
             {outputs.map((r) => (
               <>
-                <dt>{t("to")}</dt>
+                <dt>{t('to')}</dt>
                 <dd class="mono">
-                  {r.address === account.address
-                    ? account.name
-                    : (lookupName(r.address) ?? middle(r.address, 8, 8))}{" "}
-                  <CopyButton text={r.address} />
+                  {r.address === account.address ? account.name : (lookupName(r.address) ?? middle(r.address, 8, 8))} <CopyButton text={r.address} />
                 </dd>
               </>
             ))}
             {feeRef && feeRef.amount && parseFloat(feeRef.amount) > 0 && (
               <>
-                <dt>{t("fee")}</dt>
+                <dt>{t('fee')}</dt>
                 <dd>{feeRef.amount} XDAG</dd>
               </>
             )}
             {item.pending && (
               <>
-                <dt>{t("fee")}</dt>
+                <dt>{t('fee')}</dt>
                 <dd>{fmtAmount(BigInt(item.pending.fee))} XDAG</dd>
               </>
             )}
             {item.remark && (
               <>
-                <dt>{t("remark")}</dt>
+                <dt>{t('remark')}</dt>
                 <dd>{item.remark}</dd>
               </>
             )}
-            <dt>{t("blockAddress")}</dt>
+            <dt>{t('blockAddress')}</dt>
             <dd class="mono">
-              {middle(item.txAddress, 10, 8)}{" "}
-              <CopyButton text={item.txAddress} />
+              {middle(item.txAddress, 10, 8)} <CopyButton text={item.txAddress} />
             </dd>
           </dl>
           {link && (
-            <Button
-              block
-              variant="secondary"
-              icon="external"
-              onClick={() => openExternal(link)}
-            >
-              {t("viewInExplorer")}
+            <Button block variant="secondary" icon="external" onClick={() => openExternal(link)}>
+              {t('viewInExplorer')}
             </Button>
           )}
         </div>
@@ -605,13 +480,7 @@ function TxDetail({
   );
 }
 
-export function AccountSwitcher({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
+export function AccountSwitcher({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [busy, setBusy] = useState(false);
   const sel = selectedAccount.value;
   const hide = settings.value.hideBalance;
@@ -620,47 +489,34 @@ export function AccountSwitcher({
   }, [open]);
   const pick = async (id: string) => {
     try {
-      applyState(await call("selectAccount", { id }));
+      applyState(await call('selectAccount', { id }));
       onClose();
     } catch (e) {
       toastError(e);
     }
   };
   return (
-    <Sheet open={open} onClose={onClose} title={t("accountsTitle")}>
+    <Sheet open={open} onClose={onClose} title={t('accountsTitle')}>
       <div class="account-list">
         {accounts.value.map((a) => (
-          <div
-            class={`account-item ${a.id === sel?.id ? "selected" : ""}`}
-            role="button"
-            tabIndex={0}
-            onClick={() => pick(a.id)}
-            onKeyDown={(e) =>
-              (e.key === "Enter" || e.key === " ") && pick(a.id)
-            }
-          >
-            <Identicon address={a.address} size={36} />
-            <span class="account-item-main">
-              <span class="account-item-name">{a.name}</span>
-              <span class="row-sub mono account-item-addr">
-                {middle(a.address, 6, 6)}
-                <CopyButton text={a.address} />
+          <div class={`account-item ${a.id === sel?.id ? 'selected' : ''}`}>
+            <button type="button" class="account-item-select" aria-pressed={a.id === sel?.id} onClick={() => pick(a.id)}>
+              <Identicon address={a.address} size={36} />
+              <span class="account-item-main">
+                <span class="account-item-name">{a.name}</span>
+                <span class="row-sub mono">{middle(a.address, 6, 6)}</span>
               </span>
-            </span>
-            <span class="account-item-bal">
-              {fmtAmount(balanceOf(a.address), { hide, decimals: 2 })}
-            </span>
-            {a.id === sel?.id && (
-              <Icon name="check" size={18} class="account-check" />
-            )}
+              <span class="account-item-bal">{fmtAmount(balanceOf(a.address), { hide, decimals: 2 })}</span>
+              {a.id === sel?.id && <Icon name="check" size={18} class="account-check" />}
+            </button>
+            <CopyButton text={a.address} />
             <IconButton
               icon="more"
-              label={t("accountDetails")}
+              label={t('accountDetails')}
               size={18}
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={() => {
                 onClose();
-                navigate("/account", { id: a.id });
+                navigate('/account', { id: a.id });
               }}
             />
           </div>
@@ -683,21 +539,13 @@ export function AccountSwitcher({
             }
           }}
         >
-          {t("addAccount")}
+          {t('addAccount')}
         </Button>
-        <Button
-          variant="secondary"
-          icon="download"
-          onClick={() => (onClose(), navigate("/import"))}
-        >
-          {t("importAccount")}
+        <Button variant="secondary" icon="download" onClick={() => (onClose(), navigate('/import'))}>
+          {t('importAccount')}
         </Button>
-        <Button
-          variant="ghost"
-          icon="sliders"
-          onClick={() => (onClose(), navigate("/accounts"))}
-        >
-          {t("manageAccounts")}
+        <Button variant="ghost" icon="sliders" onClick={() => (onClose(), navigate('/accounts'))}>
+          {t('manageAccounts')}
         </Button>
       </div>
     </Sheet>

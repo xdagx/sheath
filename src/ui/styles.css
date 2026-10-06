@@ -78,8 +78,7 @@ html[data-mode='tab'] body {
   min-height: 100vh;
   background:
     radial-gradient(1200px 600px at 10% -10%, rgba(30, 167, 236, 0.18), transparent 60%),
-    radial-gradient(900px 500px at 110% 110%, rgba(107, 92, 255, 0.16), transparent 60%),
-    var(--bg);
+    radial-gradient(900px 500px at 110% 110%, rgba(107, 92, 255, 0.16), transparent 60%), var(--bg);
 }
 
 #app {
@@ -1673,8 +1672,7 @@ html[data-mode='tab'] .sheet-root {
   border-radius: var(--radius-lg);
   background:
     radial-gradient(120% 90% at 100% 0%, rgba(107, 92, 255, 0.55), transparent 55%),
-    radial-gradient(100% 80% at 0% 100%, rgba(30, 167, 236, 0.5), transparent 60%),
-    linear-gradient(160deg, #15233f, #101829);
+    radial-gradient(100% 80% at 0% 100%, rgba(30, 167, 236, 0.5), transparent 60%), linear-gradient(160deg, #15233f, #101829);
   color: #fff;
   box-shadow: 0 14px 34px rgba(24, 60, 140, 0.35);
 }
@@ -1682,8 +1680,7 @@ html[data-mode='tab'] .sheet-root {
 :root[data-theme='light'] .balance-card {
   background:
     radial-gradient(120% 90% at 100% 0%, rgba(140, 125, 255, 0.95), transparent 55%),
-    radial-gradient(100% 80% at 0% 100%, rgba(40, 180, 245, 0.95), transparent 60%),
-    linear-gradient(160deg, #3b6ff5, #2a55d8);
+    radial-gradient(100% 80% at 0% 100%, rgba(40, 180, 245, 0.95), transparent 60%), linear-gradient(160deg, #3b6ff5, #2a55d8);
 }
 
 .balance-card::after {
@@ -1745,9 +1742,9 @@ html[data-mode='tab'] .sheet-root {
 
 .balance-actions {
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   margin-top: 14px;
-  gap: 6px;
+  gap: 4px;
 }
 
 .action {
@@ -1758,7 +1755,9 @@ html[data-mode='tab'] .sheet-root {
   font-size: 12px;
   font-weight: 600;
   color: #fff;
-  min-width: 60px;
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .action > span {
@@ -2012,12 +2011,28 @@ button.tx-row:hover {
 .account-item {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 2px;
   width: 100%;
-  padding: 9px 10px;
+  padding: 3px 4px 3px 10px;
   border-radius: 12px;
-  text-align: left;
   transition: background 0.15s;
+}
+
+/* the part of the row that selects / opens the account; copy and ⋮ are its siblings, not children */
+.account-item-select {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 6px 0;
+  text-align: left;
+}
+
+.account-item > .icon-btn {
+  flex: none;
+  width: 32px;
+  height: 32px;
 }
 
 .account-item:hover {
@@ -2034,22 +2049,6 @@ button.tx-row:hover {
   display: flex;
   flex-direction: column;
   gap: 2px;
-}
-
-.account-item-addr {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.account-item-addr .icon-btn {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-}
-
-.account-item > .icon-btn {
-  flex: none;
 }
 
 .account-item-name {

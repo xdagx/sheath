@@ -109,7 +109,7 @@ try {
   await page.getByLabel('RPC URL').fill(RPC);
   await page.getByRole('button', { name: 'Save' }).click();
   await page.goto(`${base}/app.html#/accounts`);
-  await page.locator('.account-item').first().click();
+  await page.locator('.account-item-select').first().click();
   await page.locator('.account-hero-name').click();
   await page.locator('.rename input').fill('Main');
   await page.getByRole('button', { name: 'Save' }).click();

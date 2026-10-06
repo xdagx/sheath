@@ -39,7 +39,7 @@ export interface OwnedBlock {
   /** block time, milliseconds since the epoch */
   time: number;
   kind: OwnedBlockKind;
-  /** the output signature is not in canonical low-S form (xdagj may refuse to spend it) */
+  /** the output signature is not in canonical low-S form; diagnostics only (see docs/FORMATS.md §3a) */
   highS: boolean;
 }
 
