@@ -69,10 +69,10 @@ so the address is recovered from there, the same way the client marked blocks as
   SHA256d of those 545 bytes, for every wallet.dat key (address blocks carry no public key).
   2018 signatures are not S-normalised: high-S must verify.
 * Address: Base64 of the first 24 bytes of SHA256d(block with bytes 0..7 zeroed).
-* A spend must be signed by the owning key. Current xdagj rejects non-canonical (high-S)
-  signatures when it checks an old block kept as raw data in its snapshot
-  (`BlockchainImpl.verifySignatureFromSnapshot`), so such blocks may not be movable yet; the
-  import screen marks them.
+* A spend must be signed by the owning key. xdagj's `verifySignatureFromSnapshot` would reject a
+  non-canonical (high-S) output signature if it held the old block as raw data; in practice the
+  node keeps the owner's public key for these records and transfers from such addresses go
+  through, so the wallet does not warn about them.
 
 ## 4. Transaction block (512 bytes = 16 × 32-byte fields)
 

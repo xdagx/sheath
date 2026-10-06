@@ -1573,11 +1573,6 @@ html[data-mode='tab'] .sheet-root {
   flex: 1;
 }
 
-.warn-mark {
-  color: var(--warning);
-  font-family: var(--font);
-}
-
 /* ------------------------------------------------------------------ home */
 .home {
   display: flex;
@@ -2039,6 +2034,22 @@ button.tx-row:hover {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.account-item-addr {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.account-item-addr .icon-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+}
+
+.account-item > .icon-btn {
+  flex: none;
 }
 
 .account-item-name {

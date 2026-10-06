@@ -229,6 +229,9 @@ try {
   assert.equal(tx3.nonce, undefined);
   assert.equal(tx3.amount, '250500000000');
   await page.getByRole('button', { name: 'Done' }).click();
+  // history is shown from the receiving address's point of view
+  await page.locator('.tx-row', { hasText: 'Received' }).first().waitFor();
+  await page.locator('.tx-row', { hasText: '+250.4' }).first().waitFor();
 
   step('old client folder: addresses found in storage/ and attached to their keys');
   await page.goto(`${base}/app.html#/import?tab=legacy`);
@@ -249,7 +252,7 @@ try {
   await page.locator('.legacy-row', { hasText: DEFAULT_BLOCK.slice(0, 8) }).waitFor();
   await page.locator('.legacy-row', { hasText: '12 XDAG' }).waitFor();
   await page.locator('.account-chip').click();
-  await page.locator('.account-item', { hasText: 'Legacy 2' }).click();
+  await page.locator('.account-item', { hasText: 'Legacy 2' }).locator('.account-item-name').click();
   await page.locator('.legacy-row', { hasText: MIDDLE_BLOCK.slice(0, 8) }).getByRole('button', { name: 'Move' }).click();
   await page.waitForFunction(() => document.querySelector('input[inputmode=decimal]')?.value === '77.7');
   await page.getByRole('button', { name: 'Review' }).click();

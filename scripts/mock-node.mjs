@@ -109,8 +109,10 @@ export function createMockNode({ netType = 'mainnet', fund = {}, legacyOwners = 
     balances.set(output.addr, (balances.get(output.addr) ?? 0n) + amount - fee);
     const time = Date.now();
     const hashlow = hex(Uint8Array.from(sha256d(raw)).reverse());
-    push(input.addr, { direction: 0, address: blockAddress, hashlow, amount: fmt(amount), time, remark: b.remark ?? '' });
-    push(output.addr, { direction: 1, address: blockAddress, hashlow, amount: fmt(amount - fee), time, remark: b.remark ?? '' });
+    // like xdagj (BlockchainImpl flips the field type before onNewTxHistory): for the sender the
+    // transfer is an "output" (1), for the recipient an "input" (0)
+    push(input.addr, { direction: 1, address: blockAddress, hashlow, amount: fmt(amount), time, remark: b.remark ?? '' });
+    push(output.addr, { direction: 0, address: blockAddress, hashlow, amount: fmt(amount - fee), time, remark: b.remark ?? '' });
     blocks.set(blockAddress, { input, output, amount, fee, remark: b.remark ?? '', time });
     log.push({ blockAddress, nonce: b.nonce?.toString(), from: input.addr, to: output.addr, amount: amount.toString(), fee: fee.toString(), remark: b.remark ?? null, head: b.head });
     return blockAddress;

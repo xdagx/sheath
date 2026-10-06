@@ -76,6 +76,7 @@ const settle = (p) => p.waitForTimeout(550);
 const raw = {}; // name -> png buffer
 
 let dbgPage = null;
+let dbgPopup = null;
 try {
   const ctx = await chromium.launchPersistentContext(join(work, 'profile'), {
     channel: 'chromium',
@@ -164,11 +165,12 @@ try {
 
 
   const popup = await ctx.newPage();
+  dbgPopup = popup;
   await popup.setViewportSize({ width: 360, height: 600 });
   const selectAccount = async (name) => {
     await popup.goto(`${base}/popup.html#/home`);
     await popup.locator('.account-chip').click();
-    await popup.locator('.account-item', { hasText: name }).first().click();
+    await popup.locator('.account-item', { hasText: name }).first().locator('.account-item-name').click();
     await popup.locator('.account-chip', { hasText: name }).waitFor();
   };
   const capture = async (lang, mainName) => {
@@ -205,7 +207,7 @@ try {
   await setLang(popup, 'zh');
   const renameAccount = async (from, to) => {
     await page.goto(`${base}/app.html#/accounts`);
-    await page.locator('.account-item', { hasText: from }).first().click();
+    await page.locator('.account-item', { hasText: from }).first().locator('.account-item-name').click();
     await page.locator('.account-hero-name').click();
     await page.locator('.rename input').fill(to);
     await page.getByRole('button', { name: '保存' }).click();
@@ -331,6 +333,7 @@ try {
   console.log(`store assets written to ${OUT}`);
 } catch (e) {
   if (dbgPage && process.env.FAIL_SHOT) await dbgPage.screenshot({ path: process.env.FAIL_SHOT }).catch(() => undefined);
+  if (dbgPopup && process.env.FAIL_SHOT) await dbgPopup.screenshot({ path: process.env.FAIL_SHOT.replace(/\.png$/, '') + '-popup.png' }).catch(() => undefined);
   throw e;
 } finally {
   node.server.close();
